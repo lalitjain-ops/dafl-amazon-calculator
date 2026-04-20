@@ -277,6 +277,36 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-thumb { background: #CCC; border-radius: 3px; }
 
+    /* ── Bulk Analysis ── */
+    .bulk-section { max-width: 1200px; margin: 0 auto 40px; padding: 0 20px; }
+    .bulk-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+    .bulk-header h2 { font-size: 16px; font-weight: 700; color: var(--primary); }
+    .bulk-header .bulk-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .bulk-status { font-size: 12px; margin-top: 8px; min-height: 16px; }
+    .bulk-status.ok  { color: var(--green); }
+    .bulk-status.err { color: var(--red); }
+    .bulk-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .bulk-kpi { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; text-align: center; box-shadow: var(--shadow); }
+    .bk-val { font-size: 24px; font-weight: 700; color: var(--primary); }
+    .bk-label { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .bulk-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .bulk-table thead { background: var(--primary); color: white; }
+    .bulk-table thead th { padding: 9px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
+    .bulk-table tbody tr { border-bottom: 1px solid var(--border); }
+    .bulk-table tbody tr:hover { background: #FAFAF8; }
+    .bulk-table td { padding: 8px 10px; vertical-align: middle; }
+    .bulk-table td.num { text-align: right; font-family: monospace; }
+    .bulk-table td.neg { color: var(--red); }
+    .fm-tag { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .fm-fba      { background: #DBEAFE; color: #1D4ED8; }
+    .fm-easyship { background: #FEF3C7; color: #92400E; }
+    .fm-selfship { background: #F3F4F6; color: #374151; }
+    .margin-good { color: var(--green); font-weight: 700; }
+    .margin-ok   { color: var(--yellow); font-weight: 700; }
+    .margin-low  { color: #D97706; font-weight: 700; }
+    .margin-bad  { color: var(--red); font-weight: 700; }
+    .bulk-empty { background: var(--card); border: 2px dashed var(--border); border-radius: var(--radius); padding: 48px 24px; text-align: center; color: var(--muted); }
+
     /* ── Autofill Search ── */
     .autofill-card { margin-bottom: 14px; }
     .search-row { display: flex; gap: 8px; align-items: center; }
@@ -780,6 +810,33 @@
 
 </div><!-- /layout -->
 
+<!-- ══════════════════════════════════════════════
+     BULK ANALYSIS SECTION
+══════════════════════════════════════════════ -->
+<div class="bulk-section">
+  <div class="card">
+    <div class="bulk-header">
+      <h2>📋 Bulk SKU Analysis — Upload up to 100+ SKUs at once</h2>
+      <div class="bulk-actions">
+        <button onclick="downloadBulkTemplate()" style="padding:7px 14px; background:var(--input-bg); border:1px solid var(--border); border-radius:6px; font-size:12px; font-weight:600; color:var(--muted); cursor:pointer;">📄 Download CSV Template</button>
+        <label style="display:flex; align-items:center; gap:6px; padding:7px 14px; background:var(--accent); color:var(--primary); border-radius:6px; cursor:pointer; font-size:12px; font-weight:700;">
+          📥 Upload SKU List (CSV)
+          <input type="file" id="bulk-csv-input" accept=".csv" style="display:none" onchange="importBulkCSV(event)" />
+        </label>
+      </div>
+    </div>
+    <div class="bulk-status" id="bulk-status"></div>
+    <p style="font-size:11px; color:var(--muted); margin-top:4px;">Uses current fee tables, zone mix &amp; accelerator waiver from the calculator above. Download the template, fill in your SKUs, and upload.</p>
+  </div>
+  <div id="bulk-results">
+    <div class="bulk-empty">
+      <div style="font-size:32px; margin-bottom:10px;">📊</div>
+      <div style="font-weight:600; margin-bottom:4px;">No bulk analysis yet</div>
+      <div style="font-size:12px;">Download the CSV template, fill in your SKUs and upload to analyse all at once.</div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════════════════════════
 //  ELLEMENTRY PRODUCT DATABASE  (for autofill search)
@@ -951,7 +1008,7 @@ function showSuggestions() {
     const dispPrice = p.mrp || p.price;
     return '<div class="search-dropdown-item" onclick="selectProduct(decodeURIComponent(\''+encoded+'\'))">'
       + '<span class="item-name">' + p.name + '</span>'
-      + '<span class="item-meta">MRP ₹' + dispPrice.toLocaleString('en-IN') + ' � ' + catLabel + '</span>'
+      + '<span class="item-meta">MRP ₹' + dispPrice.toLocaleString('en-IN') + ' � ' + catLabel + '</span>'
       + '</div>';
   }).join('');
   dd.style.display = 'block';
@@ -1756,6 +1813,225 @@ updateUI();
 updateFreshnessUI();
 updateDBCount();
 computeSellingPrice();
+
+// ══════════════════════════════════════════════════════════════════
+//  BULK ANALYSIS
+// ══════════════════════════════════════════════════════════════════
+
+const BULK_HEADERS = ['product_name','sku','category','mrp','selling_price','cogs',
+  'weight_grams','length_cm','width_cm','height_cm','fulfillment','packaging_cost',
+  'freight_cost','inbound_pct','acos_pct','agency_comm_pct',
+  'return_rate_saleable_pct','return_rate_damaged_pct','return_handling_cost',
+  'liquidation_pct','damage_prov_pct'];
+
+let bulkResults = [];
+
+function calcUnitFromObj(o) {
+  const fm      = (o.fulfillment || 'easyship').toLowerCase().trim();
+  const price   = parseFloat(o.selling_price) || 0;
+  const mrp     = parseFloat(o.mrp) || price;
+  const cogs    = parseFloat(o.cogs) || 0;
+  const weightG = parseFloat(o.weight_grams) || 0;
+  const L       = parseFloat(o.length_cm) || 0;
+  const W       = parseFloat(o.width_cm)  || 0;
+  const H       = parseFloat(o.height_cm) || 0;
+  const packaging      = parseFloat(o.packaging_cost) || 0;
+  const freight        = fm !== 'fba' ? (parseFloat(o.freight_cost) || 0) : 0;
+  const inboundPct     = (parseFloat(o.inbound_pct) || 0) / 100;
+  const saleableRt     = (parseFloat(o.return_rate_saleable_pct) || 0) / 100;
+  const damagedRt      = (parseFloat(o.return_rate_damaged_pct)  || 0) / 100;
+  const returnCt       = parseFloat(o.return_handling_cost) || 0;
+  const liquidationPct = (parseFloat(o.liquidation_pct) || 0) / 100;
+  const damagePct      = (parseFloat(o.damage_prov_pct)  || 0) / 100;
+  const acos           = (parseFloat(o.acos_pct)         || 0) / 100;
+  const agencyComm     = (parseFloat(o.agency_comm_pct)  || 0) / 100;
+  const waiver         = (parseFloat(document.getElementById('waiver').value) || 0) / 100;
+  const category       = o.category || 'home-decor';
+  const season         = document.getElementById('storage-season').value;
+  const zm             = getZones();
+
+  if (price === 0) return null;
+
+  const baseChargeableG = fm === 'selfship' ? weightG : getChargeable(weightG, L, W, H);
+  const chargeableG     = fm === 'fba' ? baseChargeableG + 100 : baseChargeableG;
+
+  const rawReferralPct = getReferralRate(category, price) / 100;
+  const referralFee    = price * rawReferralPct;
+  const waiverAmt      = price * Math.min(waiver, rawReferralPct);
+  const effectivePct   = Math.max(0, rawReferralPct - waiver);
+  const closingFee     = getClosingFee(fm, price);
+
+  let weightFee = 0;
+  if (fm === 'easyship') weightFee = blendedWeightFee(FEES.esWeight, chargeableG, zm);
+  if (fm === 'fba')      weightFee = blendedFBAWeightFee(chargeableG, zm);
+
+  const pickPack    = fm === 'fba' ? (weightG >= 12000 ? FEES.fbaPickPack.heavy : FEES.fbaPickPack.standard) : 0;
+  const storageFee  = fm === 'fba' ? fbaStoragePerUnit(L, W, H, season) : 0;
+  const inboundFee  = fm === 'fba' ? price * inboundPct : 0;
+
+  const totalAmazonFees  = referralFee - waiverAmt + closingFee + weightFee + pickPack + storageFee;
+  const netRevenue       = price - totalAmazonFees;
+  const returnProvision  = saleableRt * (totalAmazonFees + returnCt)
+                         + damagedRt  * (cogs + totalAmazonFees + returnCt);
+  const liquidationAmt   = price * liquidationPct;
+  const damageAmt        = cogs  * damagePct;
+  const adSpend          = price * acos;
+  const agencyAmt        = price * agencyComm;
+  const totalSellerCosts = cogs + packaging + freight + inboundFee + returnProvision + liquidationAmt + damageAmt;
+  const grossMarginAmt   = netRevenue - totalSellerCosts;
+  const contribMarginAmt = grossMarginAmt - adSpend - agencyAmt;
+
+  const priceFactor    = 1 - effectivePct - liquidationPct - acos - agencyComm;
+  const fixedCosts     = closingFee + weightFee + pickPack + storageFee + cogs + packaging + freight + inboundFee + returnProvision + damageAmt;
+  const breakevenPrice = priceFactor > 0 ? fixedCosts / priceFactor : null;
+
+  return {
+    price, mrp, cogs, weightG, chargeableG, fm,
+    referralFee, waiverAmt, closingFee, weightFee, pickPack, storageFee,
+    totalAmazonFees, netRevenue, packaging, freight, inboundFee,
+    returnProvision, liquidationAmt, damageAmt, adSpend, agencyAmt,
+    totalSellerCosts, grossMarginAmt, contribMarginAmt, breakevenPrice,
+    grossMarginPct:   price > 0 ? (grossMarginAmt   / price * 100) : 0,
+    contribMarginPct: price > 0 ? (contribMarginAmt / price * 100) : 0,
+  };
+}
+
+function downloadBulkTemplate() {
+  const rows = [
+    BULK_HEADERS.join(','),
+    '# fulfillment: selfship | easyship | fba',
+    '# category: large-furniture | furniture-other | home-decor | glassware-ceramicware | cookware-tableware | kitchen-tools',
+    '# All % fields are numbers e.g. 12 means 12%',
+    'Eclipse Ceramic Mug Set of 2,SWETA2197,glassware-ceramicware,1090,950,320,800,14,11,11,easyship,30,,0,12,10,5,5,150,5,2',
+    'Walnut Haze Bench,WDFRA3992,large-furniture,20590,18000,8000,15000,90,45,55,fba,200,,2,12,10,3,3,500,3,2',
+  ];
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'DAFL_Bulk_SKU_Template.csv';
+  a.click();
+}
+
+function importBulkCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const status = document.getElementById('bulk-status');
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const lines = e.target.result.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+      if (lines.length < 2) throw new Error('File appears empty.');
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g,'_'));
+      const skus = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g,''));
+        const obj = {};
+        headers.forEach((h, idx) => { obj[h] = cols[idx] || ''; });
+        if (!obj.product_name && !obj.sku) continue;
+        skus.push({ input: obj, result: calcUnitFromObj(obj) });
+      }
+      bulkResults = skus;
+      renderBulkResults(skus);
+      status.className = 'bulk-status ok';
+      status.textContent = `✓ Analysed ${skus.length} SKUs successfully.`;
+    } catch(err) {
+      status.className = 'bulk-status err';
+      status.textContent = '✗ Error: ' + err.message;
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function renderBulkResults(skus) {
+  const container = document.getElementById('bulk-results');
+  if (!skus.length) { container.innerHTML = ''; return; }
+
+  const withResult  = skus.filter(s => s.result);
+  const profitable  = withResult.filter(s => s.result.contribMarginAmt > 0);
+  const avgContrib  = withResult.reduce((s, x) => s + x.result.contribMarginPct, 0) / (withResult.length || 1);
+
+  const fmtR = n => '₹' + Math.round(n).toLocaleString('en-IN');
+  const fmtP = n => n.toFixed(1) + '%';
+  const mc   = p => p > 20 ? 'margin-good' : p > 10 ? 'margin-ok' : p > 0 ? 'margin-low' : 'margin-bad';
+
+  let html = `
+    <div class="bulk-summary">
+      <div class="bulk-kpi"><div class="bk-val">${skus.length}</div><div class="bk-label">SKUs Analysed</div></div>
+      <div class="bulk-kpi"><div class="bk-val" style="color:var(--green)">${profitable.length}</div><div class="bk-label">Profitable SKUs</div></div>
+      <div class="bulk-kpi"><div class="bk-val ${mc(avgContrib)}">${fmtP(avgContrib)}</div><div class="bk-label">Avg Contribution Margin</div></div>
+      <div class="bulk-kpi"><div class="bk-val" style="color:var(--red)">${skus.length - profitable.length}</div><div class="bk-label">Need Attention</div></div>
+    </div>
+    <div class="card" style="padding:0; overflow:hidden;">
+    <div style="overflow-x:auto;">
+    <table class="bulk-table">
+      <thead><tr>
+        <th>SKU / Product Name</th><th>Category</th><th>FM</th>
+        <th>MRP</th><th>Sell Price</th><th>COGS</th>
+        <th>Amazon Fees</th><th>Net Revenue</th>
+        <th>Gross Margin</th><th>Contribution Margin</th><th>Breakeven Price</th>
+      </tr></thead>
+      <tbody>`;
+
+  for (const { input, result: r } of skus) {
+    const name = input.product_name || '—';
+    const sku  = input.sku || '—';
+    if (!r) {
+      html += `<tr><td><strong>${name}</strong><br/><small style="color:var(--muted)">${sku}</small></td>
+        <td colspan="10" style="color:var(--muted);font-style:italic;font-size:11px;">Missing selling price — skipped</td></tr>`;
+      continue;
+    }
+    html += `<tr>
+      <td><strong>${name}</strong><br/><small style="color:var(--muted)">${sku}</small></td>
+      <td style="font-size:11px;color:var(--muted)">${input.category || '—'}</td>
+      <td><span class="fm-tag fm-${r.fm}">${r.fm}</span></td>
+      <td class="num">${fmtR(r.mrp)}</td>
+      <td class="num">${fmtR(r.price)}</td>
+      <td class="num neg">${fmtR(r.cogs)}</td>
+      <td class="num neg">${fmtR(r.totalAmazonFees)}</td>
+      <td class="num">${fmtR(r.netRevenue)}</td>
+      <td class="num"><span class="${mc(r.grossMarginPct)}">${fmtP(r.grossMarginPct)}</span><br/><small style="color:var(--muted)">${fmtR(r.grossMarginAmt)}</small></td>
+      <td class="num"><span class="${mc(r.contribMarginPct)}">${fmtP(r.contribMarginPct)}</span><br/><small style="color:var(--muted)">${fmtR(r.contribMarginAmt)}</small></td>
+      <td class="num">${r.breakevenPrice ? fmtR(r.breakevenPrice) : '—'}</td>
+    </tr>`;
+  }
+
+  html += `</tbody></table></div></div>
+    <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+      <button onclick="exportBulkCSV()" class="btn btn-primary" style="font-size:12px;">⬇ Export Results as CSV</button>
+    </div>`;
+  container.innerHTML = html;
+}
+
+function exportBulkCSV() {
+  if (!bulkResults.length) return;
+  const headers = ['Product Name','SKU','Category','Fulfillment','MRP','Selling Price','COGS',
+    'Amazon Fees Total','Referral Fee','Closing Fee','Weight Fee','Pick & Pack','Storage Fee',
+    'Net Revenue','Gross Margin %','Gross Margin ₹',
+    'Ad Spend','Agency Commission','Return Provision','Liquidation','Damage Provision',
+    'Contribution Margin %','Contribution Margin ₹','Breakeven Price'];
+  const rows = [headers.join(',')];
+  for (const { input, result: r } of bulkResults) {
+    if (!r) { rows.push(`"${input.product_name||''}","${input.sku||''}","${input.category||''}",,,,,,,,,,,,,,,,,,,,`); continue; }
+    rows.push([
+      `"${input.product_name||''}"`,`"${input.sku||''}"`,input.category||'',r.fm,
+      r.mrp.toFixed(2), r.price.toFixed(2), r.cogs.toFixed(2),
+      r.totalAmazonFees.toFixed(2), r.referralFee.toFixed(2), r.closingFee.toFixed(2),
+      r.weightFee.toFixed(2), r.pickPack.toFixed(2), r.storageFee.toFixed(2),
+      r.netRevenue.toFixed(2),
+      r.grossMarginPct.toFixed(1), r.grossMarginAmt.toFixed(2),
+      r.adSpend.toFixed(2), r.agencyAmt.toFixed(2),
+      r.returnProvision.toFixed(2), r.liquidationAmt.toFixed(2), r.damageAmt.toFixed(2),
+      r.contribMarginPct.toFixed(1), r.contribMarginAmt.toFixed(2),
+      r.breakevenPrice ? Math.round(r.breakevenPrice) : ''
+    ].join(','));
+  }
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'DAFL_Bulk_Results.csv';
+  a.click();
+}
 </script>
 </body>
 </html>
