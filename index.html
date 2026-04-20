@@ -450,6 +450,18 @@
           <div class="fee-cell"><label>≤ ₹1,000 (%)</label><input type="number" id="ref_kitchen-tools_t1" step="0.5" /></div>
           <div class="fee-cell"><label>&gt; ₹1,000 (%)</label><input type="number" id="ref_kitchen-tools_t2" step="0.5" /></div>
         </div>
+
+        <div class="fee-section-title">Home Furnishings &amp; Textiles</div>
+        <div class="fee-grid fee-grid-2">
+          <div class="fee-cell"><label>≤ ₹1,000 (%)</label><input type="number" id="ref_home-textiles_t1" step="0.5" /></div>
+          <div class="fee-cell"><label>&gt; ₹1,000 (%)</label><input type="number" id="ref_home-textiles_t2" step="0.5" /></div>
+        </div>
+
+        <div class="fee-section-title">Lighting &amp; Lamps</div>
+        <div class="fee-grid fee-grid-2">
+          <div class="fee-cell"><label>≤ ₹1,000 (%)</label><input type="number" id="ref_lighting_t1" step="0.5" /></div>
+          <div class="fee-cell"><label>&gt; ₹1,000 (%)</label><input type="number" id="ref_lighting_t2" step="0.5" /></div>
+        </div>
       </div>
 
       <!-- ── Closing Fees ── -->
@@ -594,7 +606,7 @@
   <div class="inputs-panel">
 
     <div class="card autofill-card">
-      <div class="card-title"><span class="icon">🔍</span> Quick Product Lookup <span style="font-size:10px; font-weight:400; color:var(--muted); margin-left:6px;">ellementry catalogue</span></div>
+      <div class="card-title"><span class="icon">🔍</span> Quick Product Lookup <span style="font-size:10px; font-weight:400; color:var(--muted); margin-left:6px;">from imported CSV</span></div>
       <div style="position:relative;">
         <div class="search-row">
           <input type="text" id="autofill-query" placeholder='Type product name or SKU…' oninput="showSuggestions()" onkeydown="handleSearchKey(event)" autocomplete="off" />
@@ -611,7 +623,7 @@
         <button onclick="downloadTemplate()" style="padding:6px 12px; background:var(--input-bg); border:1px solid var(--border); border-radius:6px; font-size:11px; font-weight:600; color:var(--muted); cursor:pointer;">📄 Download Template</button>
         <span id="db-count" style="font-size:11px; color:var(--muted); align-self:center; margin-left:auto;"></span>
       </div>
-      <div class="autofill-hint" style="margin-top:6px;">Fills price, weight &amp; category. COGS entered manually. Import CSV to add pre-launch products.</div>
+      <div class="autofill-hint" style="margin-top:6px;">Import your product CSV to search and auto-fill MRP, weight, dimensions &amp; category. COGS auto-set to 30% of MRP (edit to override).</div>
     </div>
 
     <div class="card">
@@ -625,6 +637,8 @@
           </optgroup>
           <optgroup label="Home & Decor">
             <option value="home-decor">Home Décor Products</option>
+            <option value="home-textiles">Home Furnishings & Textiles</option>
+            <option value="lighting">Lighting & Lamps</option>
           </optgroup>
           <optgroup label="Kitchen & Tableware">
             <option value="glassware-ceramicware">Kitchen — Glassware & Ceramicware</option>
@@ -649,7 +663,7 @@
           <div class="input-prefix"><span>₹</span><input type="number" id="price" min="0" step="1" style="background:#F0FFF4;font-weight:700;color:#1A7F37;" readonly /></div>
         </div>
         <div class="field">
-          <label>Your COGS <span class="hint">per unit — auto 25% of MRP, edit to override</span></label>
+          <label>Your COGS <span class="hint">per unit — auto 30% of MRP, edit to override</span></label>
           <div class="input-prefix"><span>₹</span><input type="number" id="cogs" value="600" min="0" step="1" oninput="this.dataset.manual='1'" /></div>
         </div>
       </div>
@@ -702,37 +716,27 @@
       <label id="freight-hint" style="font-size:11px; color:var(--muted); margin-top:-6px; display:block; margin-bottom:10px;"></label>
       <div class="two-col">
         <div class="field">
-          <label>Returns — Saleable <span class="hint">% of orders, item resellable</span></label>
-          <div class="input-suffix"><input type="number" id="return-rate-saleable" value="5" min="0" max="100" step="0.5" /><span>%</span></div>
+          <label>Return Provision <span class="hint">% of COGS</span></label>
+          <div class="input-suffix"><input type="number" id="return-prov" value="10.25" min="0" max="100" step="0.25" /><span>%</span></div>
         </div>
         <div class="field">
-          <label>Returns — Damaged <span class="hint">% of orders, item written off</span></label>
-          <div class="input-suffix"><input type="number" id="return-rate-damaged" value="5" min="0" max="100" step="0.5" /><span>%</span></div>
+          <label>Liquidation Provision <span class="hint">% of COGS</span></label>
+          <div class="input-suffix"><input type="number" id="liquidation" value="12.5" min="0" max="50" step="0.5" /><span>%</span></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Damage / Loss Provision <span class="hint">% of COGS</span></label>
+          <div class="input-suffix"><input type="number" id="damage-prov" value="5" min="0" max="20" step="0.5" /><span>%</span></div>
+        </div>
+        <div class="field">
+          <label>Ad Spend <span class="hint">% of COGS</span></label>
+          <div class="input-suffix"><input type="number" id="acos" value="30" min="0" max="200" step="0.5" /><span>%</span></div>
         </div>
       </div>
       <div class="field">
-        <label>Return Handling Cost <span class="hint">per return (reverse courier + inspection)</span></label>
-        <div class="input-prefix"><span>₹</span><input type="number" id="return-cost" value="150" min="0" step="10" /></div>
-      </div>
-      <div class="two-col">
-        <div class="field">
-          <label>Liquidation Provision <span class="hint">% of selling price</span></label>
-          <div class="input-suffix"><input type="number" id="liquidation" value="5" min="0" max="30" step="0.5" /><span>%</span></div>
-        </div>
-        <div class="field">
-          <label>Damage / Loss Provision <span class="hint">% of COGS</span></label>
-          <div class="input-suffix"><input type="number" id="damage-prov" value="2" min="0" max="20" step="0.5" /><span>%</span></div>
-        </div>
-      </div>
-      <div class="two-col">
-        <div class="field">
-          <label>Amazon Ads ACoS <span class="hint">% of selling price</span></label>
-          <div class="input-suffix"><input type="number" id="acos" value="12" min="0" max="100" step="0.5" /><span>%</span></div>
-        </div>
-        <div class="field">
-          <label>Agency Commission <span class="hint">% of selling price</span></label>
-          <div class="input-suffix"><input type="number" id="agency-comm" value="10" min="0" max="30" step="0.5" /><span>%</span></div>
-        </div>
+        <label>Ellementry Commission <span class="hint">% of selling price</span></label>
+        <div class="input-suffix"><input type="number" id="agency-comm" value="10" min="0" max="30" step="0.5" /><span>%</span></div>
       </div>
     </div>
 
@@ -958,21 +962,19 @@ const BUILTIN_PRODUCTS = [
   {name:'Muse Glass Lamp With Shade',               sku:'GSFNA2186', mrp:5550,  weight:1800, L:0,  W:0,  H:0},
 ];
 
-// ── Merge builtins with any imported products from localStorage ──
+// ── Products come from CSV import only ──
 function getAllProducts() {
-  let imported = [];
   try {
     const raw = localStorage.getItem('dafl_imported_products');
-    if (raw) imported = JSON.parse(raw);
+    if (raw) return JSON.parse(raw);
   } catch(e) {}
-  return [...BUILTIN_PRODUCTS, ...imported];
+  return [];
 }
 
 function updateDBCount() {
   const all = getAllProducts();
-  const imp = all.length - BUILTIN_PRODUCTS.length;
   const el = document.getElementById('db-count');
-  if (el) el.textContent = all.length + ' products' + (imp > 0 ? ' (' + imp + ' imported)' : ' (live from ellementry.com)');
+  if (el) el.textContent = all.length > 0 ? all.length + ' products imported' : 'No CSV imported yet';
 }
 
 function computeSellingPrice() {
@@ -983,7 +985,7 @@ function computeSellingPrice() {
   // Auto-set COGS = 25% of MRP unless user has manually edited it
   const cogsEl = document.getElementById('cogs');
   if (!cogsEl.dataset.manual) {
-    cogsEl.value = Math.round(mrp * 0.25);
+    cogsEl.value = Math.round(mrp * 0.30);
   }
   calculate();
 }
@@ -1175,7 +1177,9 @@ const DEFAULT_FEES = {
     'home-decor':            { t1: 0, t2: 17.0 },
     'glassware-ceramicware': { t1: 0, t2: 12.5 },
     'cookware-tableware':    { t1: 0, t2: 12.5 },
-    'kitchen-tools':         { t1: 0, t2: 12.5 }
+    'kitchen-tools':         { t1: 0, t2: 12.5 },
+    'home-textiles':         { t1: 0, t2: 17.0 },
+    'lighting':              { t1: 0, t2: 17.0 }
   },
   closing: {
     fba:      [26, 22, 27, 52],       // ₹0-300 / ₹301-500 / ₹501-1000 / >₹1000
@@ -1226,9 +1230,12 @@ function saveFees() {
     'home-decor':      ['t1','t2'],
     'glassware-ceramicware': ['t1','t2'],
     'cookware-tableware':    ['t1','t2'],
-    'kitchen-tools':         ['t1','t2']
+    'kitchen-tools':         ['t1','t2'],
+    'home-textiles':         ['t1','t2'],
+    'lighting':              ['t1','t2']
   };
   for (const [cat, tiers] of Object.entries(refCats)) {
+    if (!FEES.referral[cat]) FEES.referral[cat] = {};
     tiers.forEach(t => {
       const el = d.getElementById(`ref_${cat}_${t}`);
       if (el) FEES.referral[cat][t] = parseFloat(el.value) || 0;
@@ -1293,12 +1300,14 @@ function populateModalInputs() {
     'home-decor':      ['t1','t2'],
     'glassware-ceramicware': ['t1','t2'],
     'cookware-tableware':    ['t1','t2'],
-    'kitchen-tools':         ['t1','t2']
+    'kitchen-tools':         ['t1','t2'],
+    'home-textiles':         ['t1','t2'],
+    'lighting':              ['t1','t2']
   };
   for (const [cat, tiers] of Object.entries(refCats)) {
     tiers.forEach(t => {
       const el = d.getElementById(`ref_${cat}_${t}`);
-      if (el) el.value = FEES.referral[cat][t] ?? '';
+      if (el) el.value = (FEES.referral[cat] || {})[t] ?? '';
     });
   }
 
@@ -1572,13 +1581,10 @@ function calcUnit(fm) {
   const packaging     = parseFloat(document.getElementById('packaging').value)|| 0;
   const freight       = fm!=='fba' ? (parseFloat(document.getElementById('freight').value)||0) : 0;
   const inboundPct    = (parseFloat(document.getElementById('inbound').value) || 0) / 100;
-  const saleableRt    = (parseFloat(document.getElementById('return-rate-saleable').value)||0) / 100;
-  const damagedRt     = (parseFloat(document.getElementById('return-rate-damaged').value)||0) / 100;
-  const returnRt      = saleableRt + damagedRt;   // total return rate for priceFactor
-  const returnCt      = parseFloat(document.getElementById('return-cost').value) || 0;
+  const returnProvPct = (parseFloat(document.getElementById('return-prov').value)||0) / 100;
   const liquidationPct= (parseFloat(document.getElementById('liquidation').value)||0) / 100;
   const damagePct     = (parseFloat(document.getElementById('damage-prov').value)||0) / 100;
-  const acos          = (parseFloat(document.getElementById('acos').value)||0) / 100;
+  const acosPct       = (parseFloat(document.getElementById('acos').value)||0) / 100;
   const agencyComm    = (parseFloat(document.getElementById('agency-comm').value)||0) / 100;
   const waiver   = (parseFloat(document.getElementById('waiver').value)||0) / 100;
   const category = document.getElementById('category').value;
@@ -1606,29 +1612,24 @@ function calcUnit(fm) {
 
   const totalAmazonFees  = referralFee - waiverAmt + closingFee + weightFee + pickPack + storageFee;
   const netRevenue       = price - totalAmazonFees;
-  // Saleable returns: refund price + handling, but recover COGS (item resold)
-  // Damaged returns:  refund price + handling, COGS written off (no recovery)
-  // Cost-burn model: what did this return actually cost in real money spent?
-  // Saleable: Amazon fees (not reversed) + handling cost. COGS recovered (item resold).
-  // Damaged:  COGS written off + Amazon fees (not reversed) + handling cost.
-  const returnProvision  = saleableRt * (totalAmazonFees + returnCt)
-                         + damagedRt  * (cogs + totalAmazonFees + returnCt);
-  const liquidationAmt   = price * liquidationPct;
+  const returnProvision  = cogs * returnProvPct;
+  const liquidationAmt   = cogs * liquidationPct;
   const damageAmt        = cogs * damagePct;
-  const adSpend          = price * acos;
+  const adSpend          = cogs * acosPct;
   const agencyAmt        = price * agencyComm;
   const totalSellerCosts = cogs + packaging + freight + inboundFee + returnProvision + liquidationAmt + damageAmt;
   const grossMarginAmt   = netRevenue - totalSellerCosts;
   const contribMarginAmt = grossMarginAmt - adSpend - agencyAmt;
 
-  const priceFactor = 1 - effectivePct - liquidationPct - acos - agencyComm;
-  const fixedCosts  = closingFee + weightFee + pickPack + storageFee + cogs + packaging + freight + inboundFee + returnProvision + damageAmt;
+  const priceFactor    = 1 - effectivePct - agencyComm;
+  const fixedCosts     = closingFee + weightFee + pickPack + storageFee + packaging + freight + inboundFee
+                       + cogs * (1 + returnProvPct + liquidationPct + damagePct + acosPct);
   const breakevenPrice = priceFactor > 0 ? fixedCosts / priceFactor : null;
 
   return { price, mrp, discountPct, cogs, weightG, chargeableG, L, W, H,
     rawReferralPct, waiver, waiverAmt, referralFee, closingFee, weightFee, pickPack, storageFee,
     totalAmazonFees, netRevenue, packaging, freight, inboundFee, returnProvision,
-    saleableRt, damagedRt, liquidationAmt, damageAmt, adSpend, agencyAmt,
+    returnProvPct, liquidationAmt, damageAmt, adSpend, acosPct, agencyAmt, agencyComm,
     totalSellerCosts, grossMarginAmt, contribMarginAmt, breakevenPrice, fm };
 }
 
@@ -1655,14 +1656,14 @@ function renderWaterfall(r) {
   if (r.packaging>0) rows.push({ label:'Extra Packaging', amount:'−'+fmt(r.packaging), cls:'deduct' });
   if (r.fm==='selfship'&&r.freight>0) rows.push({ label:'Your Freight / Logistics', amount:'−'+fmt(r.freight), cls:'deduct' });
   if (r.fm==='fba'&&r.inboundFee>0)   rows.push({ label:'FBA Inbound Logistics', sub:`${(r.inboundFee/r.price*100).toFixed(1)}% of price`, amount:'−'+fmt(r.inboundFee), cls:'deduct' });
-  rows.push({ label:'Returns Provision', sub:`${(r.returnProvision/r.price*100).toFixed(1)}% eff. | ${(r.saleableRt*100).toFixed(0)}% saleable + ${(r.damagedRt*100).toFixed(0)}% damaged`, amount:'−'+fmt(r.returnProvision), cls:'deduct' });
-  rows.push({ label:'Liquidation Provision', sub:`${(r.liquidationAmt/r.price*100).toFixed(1)}% of price`, amount:'−'+fmt(r.liquidationAmt), cls:'deduct' });
+  rows.push({ label:'Returns Provision', sub:`${(r.returnProvPct*100).toFixed(2)}% of COGS`, amount:'−'+fmt(r.returnProvision), cls:'deduct' });
+  rows.push({ label:'Liquidation Provision', sub:`${(r.cogs>0?(r.liquidationAmt/r.cogs*100):0).toFixed(1)}% of COGS`, amount:'−'+fmt(r.liquidationAmt), cls:'deduct' });
   rows.push({ label:'Damage / Loss Provision', sub:`${(r.cogs>0?(r.damageAmt/r.cogs*100):0).toFixed(1)}% of COGS`, amount:'−'+fmt(r.damageAmt), cls:'deduct' });
   rows.push({ subtotal:true, label:'Total Your Costs (ex-ads)', val: fmt(r.totalSellerCosts) });
   rows.push({ label:'Gross Margin', amount: fmt(r.grossMarginAmt), cls: r.grossMarginAmt<0?'deduct':'neutral', bold:true });
   rows.push({ sep:true, label:'Growth & Operations Spend' });
-  rows.push({ label:`Ad Spend (ACoS ${(r.adSpend/r.price*100).toFixed(0)}%)`, amount:'−'+fmt(r.adSpend), cls:'deduct' });
-  rows.push({ label:`Agency Commission (${(r.agencyAmt/r.price*100).toFixed(0)}%)`, amount:'−'+fmt(r.agencyAmt), cls:'deduct' });
+  rows.push({ label:`Ad Spend (${(r.acosPct*100).toFixed(0)}% of COGS)`, amount:'−'+fmt(r.adSpend), cls:'deduct' });
+  rows.push({ label:`Ellementry Commission (${(r.agencyComm*100).toFixed(0)}% of SP)`, amount:'−'+fmt(r.agencyAmt), cls:'deduct' });
   rows.push({ label:'Contribution Margin', amount: fmt(r.contribMarginAmt), cls: r.contribMarginAmt<0?'deduct':'neutral', bold:true });
 
   let html = '';
@@ -1820,7 +1821,7 @@ computeSellingPrice();
 
 // Maps Ellementry CSV category names → tool fee categories
 // Also accepts fee categories as-is (pass-through)
-const VALID_FEE_CATS = new Set(['large-furniture','furniture-other','home-decor','glassware-ceramicware','cookware-tableware','kitchen-tools']);
+const VALID_FEE_CATS = new Set(['large-furniture','furniture-other','home-decor','home-textiles','lighting','glassware-ceramicware','cookware-tableware','kitchen-tools']);
 
 function mapCategoryToFeeCat(csvCat, sku, price) {
   if (!csvCat) return guessCategoryFromSKU(sku || '', price || 0);
@@ -1839,8 +1840,12 @@ function mapCategoryToFeeCat(csvCat, sku, price) {
   // Kitchen tools / storage
   if (/^(FOOD_STORAGE|STORAGE_JAR|JAR|CANISTER|CUTTING_BOARD|FLATWARE|CUTLERY|SPOON|FORK|KNIFE|BREAD_BOX|MORTAR|PESTLE|CHOPPING)/.test(c))
     return 'kitchen-tools';
+  // Lighting (separate fee category)
+  if (/^(LAMP|LIGHTING|LANTERN)/.test(c)) return 'lighting';
+  // Home textiles (separate fee category)
+  if (/^(TABLE_RUNNER|TABLE_LINEN|TEXTILE|NAPKIN|COASTER|PLACEMAT|BED_LINEN|CUSHION|RUG)/.test(c)) return 'home-textiles';
   // Home décor
-  if (/^(LAMP|LIGHTING|VASE|PLANTER|WALL_ART|WALL_DECOR|MIRROR|DECOR|ARTIFACT|LANTERN|CLOCHE|FRAME|CLOCK|FIGURINE|CANDLE)/.test(c))
+  if (/^(VASE|PLANTER|WALL_ART|WALL_DECOR|MIRROR|DECOR|ARTIFACT|CLOCHE|FRAME|CLOCK|FIGURINE|CANDLE)/.test(c))
     return 'home-decor';
   // Unknown — fall back to SKU-prefix guesser
   return guessCategoryFromSKU(sku || '', price || 0);
@@ -1869,14 +1874,12 @@ function calcUnitFromObj(o) {
   const H       = parseFloat(o.height_cm) || 0;
   const packaging      = parseFloat(o.packaging_cost) || 0;
   const freight        = fm !== 'fba' ? (parseFloat(o.freight_cost) || 0) : 0;
-  const inboundPct     = csvOr(o.inbound_pct, 'inbound') / 100;
-  const saleableRt     = csvOr(o.return_rate_saleable_pct, 'return-rate-saleable') / 100;
-  const damagedRt      = csvOr(o.return_rate_damaged_pct,  'return-rate-damaged')  / 100;
-  const returnCt       = csvOr(o.return_handling_cost,     'return-cost');
-  const liquidationPct = csvOr(o.liquidation_pct,          'liquidation') / 100;
-  const damagePct      = csvOr(o.damage_prov_pct,          'damage-prov') / 100;
-  const acos           = csvOr(o.acos_pct,                 'acos')        / 100;
-  const agencyComm     = csvOr(o.agency_comm_pct,          'agency-comm') / 100;
+  const inboundPct     = csvOr(o.inbound_pct,     'inbound')      / 100;
+  const returnProvPct  = csvOr(o.return_prov_pct, 'return-prov')  / 100;
+  const liquidationPct = csvOr(o.liquidation_pct, 'liquidation')  / 100;
+  const damagePct      = csvOr(o.damage_prov_pct, 'damage-prov')  / 100;
+  const acosPct        = csvOr(o.acos_pct,        'acos')         / 100;
+  const agencyComm     = csvOr(o.agency_comm_pct, 'agency-comm')  / 100;
   const waiver         = (parseFloat(document.getElementById('waiver').value) || 0) / 100;
   const category       = mapCategoryToFeeCat(o.category, o.sku, price);
   const season         = document.getElementById('storage-season').value;
@@ -1903,25 +1906,25 @@ function calcUnitFromObj(o) {
 
   const totalAmazonFees  = referralFee - waiverAmt + closingFee + weightFee + pickPack + storageFee;
   const netRevenue       = price - totalAmazonFees;
-  const returnProvision  = saleableRt * (totalAmazonFees + returnCt)
-                         + damagedRt  * (cogs + totalAmazonFees + returnCt);
-  const liquidationAmt   = price * liquidationPct;
-  const damageAmt        = cogs  * damagePct;
-  const adSpend          = price * acos;
+  const returnProvision  = cogs * returnProvPct;
+  const liquidationAmt   = cogs * liquidationPct;
+  const damageAmt        = cogs * damagePct;
+  const adSpend          = cogs * acosPct;
   const agencyAmt        = price * agencyComm;
   const totalSellerCosts = cogs + packaging + freight + inboundFee + returnProvision + liquidationAmt + damageAmt;
   const grossMarginAmt   = netRevenue - totalSellerCosts;
   const contribMarginAmt = grossMarginAmt - adSpend - agencyAmt;
 
-  const priceFactor    = 1 - effectivePct - liquidationPct - acos - agencyComm;
-  const fixedCosts     = closingFee + weightFee + pickPack + storageFee + cogs + packaging + freight + inboundFee + returnProvision + damageAmt;
+  const priceFactor    = 1 - effectivePct - agencyComm;
+  const fixedCosts     = closingFee + weightFee + pickPack + storageFee + packaging + freight + inboundFee
+                       + cogs * (1 + returnProvPct + liquidationPct + damagePct + acosPct);
   const breakevenPrice = priceFactor > 0 ? fixedCosts / priceFactor : null;
 
   return {
     price, mrp, cogs, weightG, chargeableG, fm, category,
     referralFee, waiverAmt, closingFee, weightFee, pickPack, storageFee,
     totalAmazonFees, netRevenue, packaging, freight, inboundFee,
-    returnProvision, liquidationAmt, damageAmt, adSpend, agencyAmt,
+    returnProvision, returnProvPct, liquidationAmt, damageAmt, adSpend, acosPct, agencyAmt, agencyComm,
     totalSellerCosts, grossMarginAmt, contribMarginAmt, breakevenPrice,
     grossMarginPct:   price > 0 ? (grossMarginAmt   / price * 100) : 0,
     contribMarginPct: price > 0 ? (contribMarginAmt / price * 100) : 0,
