@@ -1855,6 +1855,10 @@ const BULK_HEADERS = ['product_name','sku','category','mrp','selling_price','cog
 let bulkResults = [];
 
 function calcUnitFromObj(o) {
+  // Helper: use CSV value if provided, else fall back to the live single-SKU input
+  const domVal = (id) => { const el = document.getElementById(id); return el ? parseFloat(el.value) || 0 : 0; };
+  const csvOr  = (v, id) => (v !== '' && v !== undefined && v !== null && !isNaN(parseFloat(v))) ? parseFloat(v) : domVal(id);
+
   const fm      = (o.fulfillment || 'easyship').toLowerCase().trim();
   const mrp     = parseFloat(o.mrp) || 0;
   const price   = parseFloat(o.selling_price) || mrp || 0;
@@ -1865,14 +1869,14 @@ function calcUnitFromObj(o) {
   const H       = parseFloat(o.height_cm) || 0;
   const packaging      = parseFloat(o.packaging_cost) || 0;
   const freight        = fm !== 'fba' ? (parseFloat(o.freight_cost) || 0) : 0;
-  const inboundPct     = (parseFloat(o.inbound_pct) || 0) / 100;
-  const saleableRt     = (parseFloat(o.return_rate_saleable_pct) || 0) / 100;
-  const damagedRt      = (parseFloat(o.return_rate_damaged_pct)  || 0) / 100;
-  const returnCt       = parseFloat(o.return_handling_cost) || 0;
-  const liquidationPct = (parseFloat(o.liquidation_pct) || 0) / 100;
-  const damagePct      = (parseFloat(o.damage_prov_pct)  || 0) / 100;
-  const acos           = (parseFloat(o.acos_pct)         || 0) / 100;
-  const agencyComm     = (parseFloat(o.agency_comm_pct)  || 0) / 100;
+  const inboundPct     = csvOr(o.inbound_pct, 'inbound') / 100;
+  const saleableRt     = csvOr(o.return_rate_saleable_pct, 'return-rate-saleable') / 100;
+  const damagedRt      = csvOr(o.return_rate_damaged_pct,  'return-rate-damaged')  / 100;
+  const returnCt       = csvOr(o.return_handling_cost,     'return-cost');
+  const liquidationPct = csvOr(o.liquidation_pct,          'liquidation') / 100;
+  const damagePct      = csvOr(o.damage_prov_pct,          'damage-prov') / 100;
+  const acos           = csvOr(o.acos_pct,                 'acos')        / 100;
+  const agencyComm     = csvOr(o.agency_comm_pct,          'agency-comm') / 100;
   const waiver         = (parseFloat(document.getElementById('waiver').value) || 0) / 100;
   const category       = mapCategoryToFeeCat(o.category, o.sku, price);
   const season         = document.getElementById('storage-season').value;
