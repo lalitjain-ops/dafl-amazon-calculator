@@ -1216,7 +1216,14 @@ let FEES = loadFees();
 function loadFees() {
   try {
     const saved = localStorage.getItem('dafl_amz_fees');
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Merge any new categories from DEFAULT_FEES that old saved data may lack
+      for (const cat of Object.keys(DEFAULT_FEES.referral)) {
+        if (!parsed.referral[cat]) parsed.referral[cat] = DEFAULT_FEES.referral[cat];
+      }
+      return parsed;
+    }
   } catch(e) {}
   return JSON.parse(JSON.stringify(DEFAULT_FEES));
 }
@@ -1459,7 +1466,7 @@ function getZones() {
 // ══════════════════════════════════════════════════════════════════
 
 function getReferralRate(cat, price) {
-  const r = FEES.referral[cat];
+  const r = FEES.referral[cat] || FEES.referral['home-decor'];  // fallback for any unknown/new category
   const hasTier3 = r.t3 !== undefined;
   if (hasTier3) {
     if (price <= 1000)  return r.t1;
@@ -1856,9 +1863,8 @@ function mapCategoryToFeeCat(csvCat, sku, price) {
 
 const BULK_HEADERS = ['product_name','sku','category','mrp','selling_price','cogs',
   'weight_grams','length_cm','width_cm','height_cm','fulfillment','packaging_cost',
-  'freight_cost','inbound_pct','acos_pct','agency_comm_pct',
-  'return_rate_saleable_pct','return_rate_damaged_pct','return_handling_cost',
-  'liquidation_pct','damage_prov_pct'];
+  'freight_cost','inbound_pct','return_prov_pct','liquidation_pct','damage_prov_pct',
+  'acos_pct','agency_comm_pct'];
 
 let bulkResults = [];
 
@@ -1937,11 +1943,11 @@ function calcUnitFromObj(o) {
 function downloadBulkTemplate() {
   const rows = [
     BULK_HEADERS.join(','),
-    '# fulfillment: selfship | easyship | fba',
-    '# category: large-furniture | furniture-other | home-decor | glassware-ceramicware | cookware-tableware | kitchen-tools',
-    '# All % fields are numbers e.g. 12 means 12%',
-    'Eclipse Ceramic Mug Set of 2,SWETA2197,glassware-ceramicware,1090,950,320,800,14,11,11,easyship,30,,0,12,10,5,5,150,5,2',
-    'Walnut Haze Bench,WDFRA3992,large-furniture,20590,18000,8000,15000,90,45,55,fba,200,,2,12,10,3,3,500,3,2',
+    '# fulfillment: selfship | easyship | fba  (default: easyship)',
+    '# category: use fee names OR Ellementry names (DISHWARE_PLATE etc.) — auto-mapped',
+    '# % fields are plain numbers e.g. 10.25 means 10.25%  |  blank = use single-SKU tool defaults',
+    'Eclipse Ceramic Mug Set of 2,SWETA2197,DRINKING_CUP,1090,950,320,800,14,11,11,easyship,30,,0,10.25,12.5,5,30,10',
+    'Walnut Haze Bench,WDFRA3992,FURNITURE,20590,18000,8000,15000,90,45,55,fba,200,,2,10.25,12.5,5,30,10',
   ];
   const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
   const a = document.createElement('a');
