@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+(function() {
+  const CORRECT = 'Elle@2025@2026';
+  const KEY = 'dafl_auth';
+  if (sessionStorage.getItem(KEY) === '1') return;
+  var pwd = prompt('Enter password to access the calculator:');
+  if (pwd !== CORRECT) {
+    document.write('<html><body style="background:#111;color:#555;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;font-size:14px;">Access denied.</body></html>');
+    document.close();
+    throw new Error('Access denied');
+  }
+  sessionStorage.setItem(KEY, '1');
+})();
+</script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DAFL × Amazon.in — Unit Economics Calculator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #F2F0EC;
+      --card: #FFFFFF;
+      --border: #E2DDD6;
+      --primary: #131921;
+      --accent: #FF9900;
+      --accent-light: #FFF3DC;
+      --green: #1E7E4A;
+      --green-bg: #EBF7EF;
+      --red: #C0392B;
+      --red-bg: #FDECEA;
+      --yellow: #C17A00;
+      --yellow-bg: #FFF8E7;
+      --muted: #6B6B6B;
+      --text: #1A1A1A;
+      --input-bg: #FAFAF8;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
+      --radius: 10px;
+      --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      background: var(--primary); color: white; padding: 0 24px; height: 52px;
+      display: flex; align-items: center; gap: 12px;
+      position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    header .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+    header .logo span { color: var(--accent); }
+    header .subtitle { font-size: 12px; opacity: 0.7; margin-top: 1px; }
+    header .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    header .waiver-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,153,0,0.15); border: 1px solid rgba(255,153,0,0.3);
+      border-radius: 6px; padding: 4px 10px;
+    }
+    header .waiver-badge label { font-size: 11px; color: var(--accent); white-space: nowrap; }
+    header .waiver-badge input {
+      width: 48px; background: transparent; border: none;
+      color: white; font-size: 13px; font-weight: 600; text-align: right; outline: none;
+    }
+    header .waiver-badge .pct { color: var(--accent); font-size: 13px; font-weight: 600; }
+    .fee-settings-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px; padding: 5px 12px; color: white; font-size: 12px;
+      font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.15s;
+    }
+    .fee-settings-btn:hover { background: rgba(255,255,255,0.18); }
+    .fee-settings-btn .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+    .fee-settings-btn .dot.stale { background: var(--accent); }
+    .fee-settings-btn .dot.old { background: var(--red); }
+
+    /* ── Staleness Banner ── */
+    #staleness-banner {
+      display: none; padding: 9px 24px; font-size: 12px; font-weight: 600;
+      border-bottom: 1px solid; text-align: center;
+    }
+    #staleness-banner.warn { background: var(--yellow-bg); color: var(--yellow); border-color: #F0C060; }
+    #staleness-banner.danger { background: var(--red-bg); color: var(--red); border-color: #F5B8B3; }
+    #staleness-banner a { color: inherit; text-decoration: underline; cursor: pointer; }
+
+    /* ── Layout ── */
+    .layout {
+      display: grid; grid-template-columns: 420px 1fr; gap: 20px;
+      max-width: 1200px; margin: 20px auto; padding: 0 20px 40px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--muted); margin-bottom: 14px; padding-bottom: 8px;
+      border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px;
+    }
+    .card-title .icon { font-size: 14px; }
+
+    /* ── Form Elements ── */
+    .field { margin-bottom: 12px; }
+    .field:last-child { margin-bottom: 0; }
+    label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+    .hint { font-size: 11px; color: #999; font-weight: 400; margin-left: 4px; }
+    input[type="number"], select {
+      width: 100%; padding: 8px 10px; background: var(--input-bg);
+      border: 1px solid var(--border); border-radius: 6px; font-size: 13px; color: var(--text);
+      outline: none; transition: border-color 0.15s; -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    input[type="number"]:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,153,0,0.12); }
+    .input-prefix { position: relative; }
+    .input-prefix span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+    .input-prefix input { padding-left: 22px; }
+    .input-suffix { position: relative; }
+    .input-suffix span { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 12px; }
+    .input-suffix input { padding-right: 28px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ── Fulfillment Toggle ── */
+    .fulfil-toggle { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; margin-bottom: 14px; }
+    .fulfil-toggle button { padding: 9px 6px; background: var(--input-bg); border: none; border-right: 1px solid var(--border); cursor: pointer; font-size: 12px; font-weight: 600; color: var(--muted); transition: all 0.15s; text-align: center; }
+    .fulfil-toggle button:last-child { border-right: none; }
+    .fulfil-toggle button.active { background: var(--primary); color: white; }
+    .fulfil-toggle button small { display: block; font-size: 10px; opacity: 0.7; font-weight: 400; margin-top: 1px; }
+
+    /* ── Zone Sliders ── */
+    .zone-row { display: grid; grid-template-columns: 70px 1fr 42px; align-items: center; gap: 8px; margin-bottom: 7px; }
+    .zone-label { font-size: 12px; font-weight: 600; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); height: 4px; }
+    .zone-val { font-size: 12px; text-align: right; font-weight: 700; color: var(--accent); }
+    .zone-total { font-size: 11px; text-align: right; margin-top: 4px; }
+    .zone-total.ok { color: var(--green); }
+    .zone-total.error { color: var(--red); font-weight: 700; }
+
+    /* ── Conditional Sections ── */
+    .conditional { display: none; }
+    .conditional.visible { display: block; }
+
+    /* ── Results Panel ── */
+    .results-panel { position: sticky; top: 72px; }
+
+    /* ── Waterfall ── */
+    .waterfall-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #F0EDE8; font-size: 13px; }
+    .waterfall-row:last-child { border-bottom: none; }
+    .waterfall-row .label { color: var(--text); }
+    .waterfall-row .label small { display: block; font-size: 10px; color: var(--muted); margin-top: 1px; }
+    .waterfall-row .amount { font-weight: 700; text-align: right; white-space: nowrap; }
+    .amount.deduct { color: var(--red); }
+    .amount.credit { color: var(--green); }
+    .amount.neutral { color: var(--text); }
+    .amount.base { font-size: 15px; }
+    .waterfall-divider { height: 1px; background: var(--border); margin: 4px 0; }
+    .waterfall-subtotal { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 6px; font-size: 12px; color: var(--muted); }
+    .waterfall-subtotal .stlabel { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .waterfall-subtotal .stval { font-size: 13px; font-weight: 700; color: var(--text); }
+
+    /* ── Margin Boxes ── */
+    .margin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .margin-box { border-radius: 8px; padding: 12px 14px; text-align: center; }
+    .margin-box .mb-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .margin-box .mb-value { font-size: 22px; font-weight: 800; }
+    .margin-box .mb-abs { font-size: 12px; margin-top: 2px; }
+    .margin-box.positive { background: var(--green-bg); color: var(--green); }
+    .margin-box.warning  { background: var(--yellow-bg); color: var(--yellow); }
+    .margin-box.negative { background: var(--red-bg); color: var(--red); }
+    .margin-box.neutral  { background: #F4F4F4; color: var(--muted); }
+
+    /* ── Breakeven ── */
+    .breakeven-bar { background: var(--accent-light); border: 1px solid rgba(255,153,0,0.25); border-radius: 8px; padding: 10px 14px; margin-top: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .breakeven-bar .be-label { font-size: 12px; color: var(--yellow); font-weight: 600; }
+    .breakeven-bar .be-val { font-size: 16px; font-weight: 800; color: var(--primary); }
+
+    /* ── Compare ── */
+    .compare-toggle { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .compare-toggle button { padding: 7px 16px; border-radius: 6px; border: 1px solid var(--border); background: var(--input-bg); font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+    .compare-toggle button.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .compare-table th { background: #F7F5F1; padding: 8px 10px; text-align: right; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); border-bottom: 2px solid var(--border); }
+    .compare-table th:first-child { text-align: left; }
+    .compare-table td { padding: 7px 10px; border-bottom: 1px solid #F0EDE8; text-align: right; }
+    .compare-table td:first-child { text-align: left; color: var(--muted); }
+    .compare-table tr:last-child td { border-bottom: none; font-weight: 700; font-size: 13px; }
+    .compare-table .highlight { color: var(--green); }
+    .compare-table .neg { color: var(--red); }
+    .compare-table .win-col { background: var(--green-bg); }
+
+    /* ── Tags ── */
+    .tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle; }
+    .tag.est { background: var(--yellow-bg); color: var(--yellow); }
+    .tag.ver { background: var(--green-bg); color: var(--green); }
+
+    /* ── Data Note ── */
+    .data-note { background: #FAFAF8; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; font-size: 11px; color: var(--muted); margin-bottom: 14px; line-height: 1.7; }
+    .data-note strong { color: var(--text); }
+    .data-note .verified { color: var(--green); font-weight: 600; }
+    .data-note .estimated { color: var(--yellow); font-weight: 600; }
+
+    /* ══════════════════════════════════════════════════════════════
+       FEE SETTINGS MODAL
+    ══════════════════════════════════════════════════════════════ */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      z-index: 200; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 24px 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--card); border-radius: 12px; width: 100%; max-width: 780px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25); margin: auto; overflow: hidden;
+    }
+    .modal-header {
+      background: var(--primary); color: white; padding: 16px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header h2 { font-size: 15px; font-weight: 700; }
+    .modal-header .close-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; opacity: 0.7; line-height: 1; padding: 0 4px; }
+    .modal-header .close-btn:hover { opacity: 1; }
+
+    /* Tabs */
+    .modal-tabs { display: flex; border-bottom: 2px solid var(--border); background: #F7F5F1; }
+    .modal-tab { padding: 10px 18px; font-size: 12px; font-weight: 700; color: var(--muted); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+    .modal-tab.active { color: var(--primary); border-bottom-color: var(--accent); background: white; }
+
+    .modal-body { padding: 20px; max-height: 65vh; overflow-y: auto; }
+    .modal-section { display: none; }
+    .modal-section.active { display: block; }
+
+    /* Fee table grids inside modal */
+    .fee-grid { display: grid; gap: 8px; margin-bottom: 16px; }
+    .fee-grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .fee-grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .fee-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .fee-section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px;
+      color: var(--muted); margin: 14px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    }
+    .fee-cell label { font-size: 10px; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
+    .fee-cell input { font-size: 12px; padding: 6px 8px; }
+    .sc-link {
+      display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600;
+      color: var(--accent); text-decoration: none; background: var(--accent-light);
+      border: 1px solid rgba(255,153,0,0.3); border-radius: 5px; padding: 4px 10px; margin-bottom: 12px;
+    }
+    .sc-link:hover { background: #FFE8A0; }
+
+    /* Last updated / date picker */
+    .last-updated-row {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--green-bg); border: 1px solid #B2DFC4; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;
+    }
+    .last-updated-row label { font-size: 12px; font-weight: 700; color: var(--green); margin: 0; white-space: nowrap; }
+    .last-updated-row input[type="date"] { font-size: 12px; padding: 5px 8px; color: var(--text); border: 1px solid var(--border); border-radius: 5px; background: white; width: auto; }
+    .last-updated-row small { font-size: 11px; color: var(--green); opacity: 0.8; }
+
+    /* Modal footer */
+    .modal-footer {
+      padding: 14px 20px; border-top: 1px solid var(--border); background: #F7F5F1;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .btn { padding: 8px 18px; border-radius: 7px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; border: none; }
+    .btn-primary { background: var(--accent); color: var(--primary); }
+    .btn-primary:hover { background: #E68A00; }
+    .btn-ghost { background: none; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); }
+    .btn-danger { background: none; color: var(--red); border: 1px solid #F5B8B3; font-size: 12px; padding: 6px 12px; }
+    .btn-danger:hover { background: var(--red-bg); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #CCC; border-radius: 3px; }
+
+    /* ── Autofill Search ── */
+    .autofill-card { margin-bottom: 14px; }
+    .search-row { display: flex; gap: 8px; align-items: center; }
+    .search-row input[type="text"] {
+      flex: 1; padding: 8px 12px; background: var(--input-bg);
+      border: 1px solid var(--border); border-radius: 6px;
+      font-size: 13px; color: var(--text); outline: none; transition: border-color 0.15s;
+    }
+    .search-row input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,153,0,0.12); }
+    .search-row input[type="text"]::placeholder { color: #bbb; }
+    .btn-search {
+      padding: 8px 14px; background: var(--accent); color: var(--primary);
+      border: none; border-radius: 6px; font-size: 12px; font-weight: 700;
+      cursor: pointer; white-space: nowrap; transition: background 0.15s;
+    }
+    .btn-search:hover { background: #E68A00; }
+    .btn-search:disabled { opacity: 0.5; cursor: default; }
+    .search-status { font-size: 11px; margin-top: 6px; min-height: 16px; }
+    .search-status.ok   { color: var(--green); }
+    .search-status.err  { color: var(--red); }
+    .search-status.info { color: var(--muted); }
+    .autofill-hint { font-size: 10px; color: #bbb; margin-top: 5px; }
+    .search-dropdown {
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 8px; margin-top: 4px; overflow-y: auto; max-height: 340px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    }
+    .search-dropdown-item {
+      padding: 9px 14px; cursor: pointer; font-size: 12px;
+      border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;
+    }
+    .search-dropdown-item:last-child { border-bottom: none; }
+    .search-dropdown-item:hover { background: var(--input-bg); }
+    .search-dropdown-item .item-name { font-weight: 600; color: var(--fg); }
+    .search-dropdown-item .item-meta { font-size: 11px; color: var(--muted); text-align: right; }
+
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .results-panel { position: static; }
+      .fee-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ HEADER ══════════════ -->
+<header>
+  <div>
+    <div class="logo">DAFL <span>×</span> Amazon.in</div>
+    <div class="subtitle">Unit Economics Calculator</div>
+  </div>
+  <div class="header-right">
+    <button class="fee-settings-btn" onclick="openFeeModal()">
+      <span class="dot" id="fee-freshness-dot"></span>
+      ⚙ Fee Tables
+      <span id="fee-updated-label" style="font-weight:400; opacity:0.8; font-size:11px;"></span>
+    </button>
+    <div class="waiver-badge">
+      <label>Accelerator Waiver</label>
+      <input type="number" id="waiver" value="0" min="0" max="20" step="0.5" />
+      <span class="pct">%</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════════ STALENESS BANNER ══════════════ -->
+<div id="staleness-banner">
+  Fee tables are <span id="staleness-days"></span> days old —
+  <a onclick="openFeeModal()">verify against Seller Central and update</a> to keep calculations accurate.
+</div>
+
+<!-- ══════════════════════════════════════════════
+     FEE SETTINGS MODAL
+══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="fee-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>⚙ Amazon Fee Tables — Edit &amp; Update</h2>
+      <button class="close-btn" onclick="closeFeeModal()">✕</button>
+    </div>
+
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('referral')">Referral Fees</button>
+      <button class="modal-tab" onclick="switchTab('closing')">Closing Fees</button>
+      <button class="modal-tab" onclick="switchTab('easyship')">Easy Ship Rates</button>
+      <button class="modal-tab" onclick="switchTab('fba')">FBA Rates</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- Last Updated row (shown in all tabs) -->
+      <div class="last-updated-row">
+        <label>Last Verified:</label>
+        <input type="date" id="fee-last-updated" />
+        <small>Set this to today each time you verify fees in Seller Central</small>
+      </div>
+
+      <!-- ── Referral Fees ── -->
+      <div class="modal-section active" id="tab-referral">
+        <a class="sc-link" href="https://sell.amazon.in/fees-and-pricing" target="_blank">↗ Amazon.in Fee &amp; Pricing Page</a>
+        <p style="font-size:11px; color:var(--muted); margin-bottom:14px;">
+          Referral fee % charged on the selling price. Verify each category tier on the public fees page above (no login needed).
+          Enter 0 for the ≤₹1,000 tier — this is confirmed free for all your categories.
+        </p>
+
+        <div class="fee-section-title">Large Furniture — Sofa, Beds, Wardrobes, Recliners, Dining</div>
+        <div class="fee-grid fee-grid-3">
+          <div class="fee-cell"><label>≤ ₹1,000 (%)</label><input type="number" id="ref_large-furniture_t1" step="0.5" /></div>
+          <div class="fee-cell"><label>₹1,001–₹15,000 (%)</label><input type="number" id="ref_large-furniture_t2" step="0.5" /></div>
+          <div class="fee-cell"><label>&gt; ₹15,000 (%)</label><input type="number" id="ref_large-furniture_t3" step="0.5" /></div>
+        </div>
+
+        <div class="fee-section-title">Furniture — Other Products</div>
+        <div class="fee-grid fee-grid-3">
+          <div class="fee-cell"><label>≤ ₹1,000 (%)</label><input type="number" id="ref_furniture-other_t1" step="0.5" /></div>
+          <div class="fee-cell"><label>₹1,001–₹15,000 (%)</label><input type="number" id="ref_furniture-other_t2" step="0.5" /></div>
+          <div class="fee-cell"><label>&gt; ₹15,000 (%)</label><input type="number" id="ref_furniture-other_t3" step="0.5" /></div>
+        </div>
+
+        <div class="fee-section-title">Home Décor Products</div>
+        <div class="fee-grid fee-grid-2">
+          <div class="fee-cell"><label>≤ ₹1,000 (%)</label><input type="number" id="ref_home-decor_t1" step="0.5" /></div>
+          <div class="fee-cell"><label>&gt; ₹1,000 (%)</label><input type="number" id="ref_home-decor_t2" step="0.5" /></div>
+        </div>
+
+        <div class="fee-section-title">Kitchen — Glassware &amp; Ceramicware</div>
+        <div class="fee-grid fee-grid-2">
+          <div class="fee-cell"><label>≤ ₹1,000 (%)</label><input type="number" id="ref_glassware-ceramicware_t1" step="0.5" /></div>
+          <div class="fee-cell"><label>&gt; ₹1,000 (%)</label><input type="number" id="ref_glassware-ceramicware_t2" step="0.5" /></div>
+        </div>
+
+        <div class="fee-section-title">Cookware, Tableware &amp; Dinnerware</div>
+        <div class="fee-grid fee-grid-2">
+          <div class="fee-cell"><label>≤ ₹1,000 (%)</label><input type="number" id="ref_cookware-tableware_t1" step="0.5" /></div>
+          <div class="fee-cell"><label>&gt; ₹1,000 (%)</label><input type="number" id="ref_cookware-tableware_t2" step="0.5" /></div>
+        </div>
+
+        <div class="fee-section-title">Kitchen Tools &amp; Supplies</div>
+        <div class="fee-grid fee-grid-2">
+          <div class="fee-cell"><label>≤ ₹1,000 (%)</label><input type="number" id="ref_kitchen-tools_t1" step="0.5" /></div>
+          <div class="fee-cell"><label>&gt; ₹1,000 (%)</label><input type="number" id="ref_kitchen-tools_t2" step="0.5" /></div>
+        </div>
+      </div>
+
+      <!-- ── Closing Fees ── -->
+      <div class="modal-section" id="tab-closing">
+        <a class="sc-link" href="https://sell.amazon.in/fees-and-pricing" target="_blank">↗ Amazon.in Fee &amp; Pricing Page</a>
+        <p style="font-size:11px; color:var(--muted); margin-bottom:14px;">
+          Fixed fee per order, charged in addition to referral fee. Varies by selling price band and fulfillment channel. All amounts in ₹ ex-GST.
+        </p>
+
+        <div class="fee-section-title">FBA / Fulfillment Centre</div>
+        <div class="fee-grid fee-grid-4">
+          <div class="fee-cell"><label>₹0–300 (₹)</label><input type="number" id="close_fba_b1" step="1" /></div>
+          <div class="fee-cell"><label>₹301–500 (₹)</label><input type="number" id="close_fba_b2" step="1" /></div>
+          <div class="fee-cell"><label>₹501–1,000 (₹)</label><input type="number" id="close_fba_b3" step="1" /></div>
+          <div class="fee-cell"><label>&gt; ₹1,000 (₹)</label><input type="number" id="close_fba_b4" step="1" /></div>
+        </div>
+
+        <div class="fee-section-title">Easy Ship</div>
+        <div class="fee-grid fee-grid-4">
+          <div class="fee-cell"><label>₹0–300 (₹)</label><input type="number" id="close_easyship_b1" step="1" /></div>
+          <div class="fee-cell"><label>₹301–500 (₹)</label><input type="number" id="close_easyship_b2" step="1" /></div>
+          <div class="fee-cell"><label>₹501–1,000 (₹)</label><input type="number" id="close_easyship_b3" step="1" /></div>
+          <div class="fee-cell"><label>&gt; ₹1,000 (₹)</label><input type="number" id="close_easyship_b4" step="1" /></div>
+        </div>
+
+        <div class="fee-section-title">Self-Ship / Merchant Fulfilled</div>
+        <div class="fee-grid fee-grid-4">
+          <div class="fee-cell"><label>₹0–300 (₹)</label><input type="number" id="close_selfship_b1" step="1" /></div>
+          <div class="fee-cell"><label>₹301–500 (₹)</label><input type="number" id="close_selfship_b2" step="1" /></div>
+          <div class="fee-cell"><label>₹501–1,000 (₹)</label><input type="number" id="close_selfship_b3" step="1" /></div>
+          <div class="fee-cell"><label>&gt; ₹1,000 (₹)</label><input type="number" id="close_selfship_b4" step="1" /></div>
+        </div>
+      </div>
+
+      <!-- ── Easy Ship Weight Handling ── -->
+      <div class="modal-section" id="tab-easyship">
+        <a class="sc-link" href="https://sellercentral.amazon.in/help/hub/reference/external/G201379720" target="_blank">↗ Seller Central: Easy Ship Features &amp; Fees (G201379720)</a>
+        <p style="font-size:11px; color:var(--muted); margin-bottom:14px;">
+          Weight handling fee per shipment. Charged on actual or volumetric weight (whichever is higher), rounded up to the next 500g slab.
+          Log into Seller Central to get the exact current table — it's updated periodically and not always publicly available.
+        </p>
+
+        <div style="display:grid; grid-template-columns: 130px 1fr 1fr 1fr 1fr; gap:8px; align-items:center; margin-bottom:8px;">
+          <div style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;">Zone →</div>
+          <div style="font-size:11px; font-weight:700; text-align:center;">Local</div>
+          <div style="font-size:11px; font-weight:700; text-align:center;">Regional</div>
+          <div style="font-size:11px; font-weight:700; text-align:center;">National</div>
+          <div style="font-size:11px; font-weight:700; text-align:center;">Special</div>
+        </div>
+        <div style="display:grid; grid-template-columns: 130px 1fr 1fr 1fr 1fr; gap:8px; align-items:center; margin-bottom:8px;">
+          <div style="font-size:11px; font-weight:600; color:var(--muted);">First 500g (₹)</div>
+          <input type="number" id="esw_first500_local" step="1" style="text-align:center;" />
+          <input type="number" id="esw_first500_regional" step="1" style="text-align:center;" />
+          <input type="number" id="esw_first500_national" step="1" style="text-align:center;" />
+          <input type="number" id="esw_first500_special" step="1" style="text-align:center;" />
+        </div>
+        <div style="display:grid; grid-template-columns: 130px 1fr 1fr 1fr 1fr; gap:8px; align-items:center;">
+          <div style="font-size:11px; font-weight:600; color:var(--muted);">Each add'l 500g (₹)</div>
+          <input type="number" id="esw_add500_local" step="1" style="text-align:center;" />
+          <input type="number" id="esw_add500_regional" step="1" style="text-align:center;" />
+          <input type="number" id="esw_add500_national" step="1" style="text-align:center;" />
+          <input type="number" id="esw_add500_special" step="1" style="text-align:center;" />
+        </div>
+      </div>
+
+      <!-- ── FBA Rates ── -->
+      <div class="modal-section" id="tab-fba">
+        <a class="sc-link" href="https://sellercentral.amazon.in/help/hub/reference/external/G201747570" target="_blank">↗ Seller Central: FBA Fee Schedule (G201747570)</a>
+        <p style="font-size:11px; color:var(--muted); margin-bottom:14px;">
+          FBA fees include weight handling (by zone), pick &amp; pack (by size), and monthly storage (by season). All in ₹ ex-GST.
+        </p>
+
+        <div class="fee-section-title">FBA Weight Handling (₹ per shipment — Standard STEP)</div>
+        <div style="display:grid; grid-template-columns: 150px 1fr 1fr 1fr; gap:8px; align-items:center; margin-bottom:8px;">
+          <div style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;">Slab → Zone</div>
+          <div style="font-size:11px; font-weight:700; text-align:center;">Local</div>
+          <div style="font-size:11px; font-weight:700; text-align:center;">Regional</div>
+          <div style="font-size:11px; font-weight:700; text-align:center;">National</div>
+        </div>
+        <div style="display:grid; grid-template-columns: 150px 1fr 1fr 1fr; gap:8px; align-items:center; margin-bottom:6px;">
+          <div style="font-size:11px; font-weight:600; color:var(--muted);">≤ 500g (₹)</div>
+          <input type="number" id="fbaw_s1_local" step="1" style="text-align:center;" />
+          <input type="number" id="fbaw_s1_regional" step="1" style="text-align:center;" />
+          <input type="number" id="fbaw_s1_national" step="1" style="text-align:center;" />
+        </div>
+        <div style="display:grid; grid-template-columns: 150px 1fr 1fr 1fr; gap:8px; align-items:center; margin-bottom:6px;">
+          <div style="font-size:11px; font-weight:600; color:var(--muted);">≤ 1 kg (₹)</div>
+          <input type="number" id="fbaw_s2_local" step="1" style="text-align:center;" />
+          <input type="number" id="fbaw_s2_regional" step="1" style="text-align:center;" />
+          <input type="number" id="fbaw_s2_national" step="1" style="text-align:center;" />
+        </div>
+        <div style="display:grid; grid-template-columns: 150px 1fr 1fr 1fr; gap:8px; align-items:center; margin-bottom:6px;">
+          <div style="font-size:11px; font-weight:600; color:var(--muted);">≤ 2 kg (₹)</div>
+          <input type="number" id="fbaw_s3_local" step="1" style="text-align:center;" />
+          <input type="number" id="fbaw_s3_regional" step="1" style="text-align:center;" />
+          <input type="number" id="fbaw_s3_national" step="1" style="text-align:center;" />
+        </div>
+        <div style="display:grid; grid-template-columns: 150px 1fr 1fr 1fr; gap:8px; align-items:center; margin-bottom:6px;">
+          <div style="font-size:11px; font-weight:600; color:var(--muted);">2–5 kg /kg add'l (₹)</div>
+          <input type="number" id="fbaw_pkg2_local" step="0.5" style="text-align:center;" />
+          <input type="number" id="fbaw_pkg2_regional" step="0.5" style="text-align:center;" />
+          <input type="number" id="fbaw_pkg2_national" step="0.5" style="text-align:center;" />
+        </div>
+        <div style="display:grid; grid-template-columns: 150px 1fr 1fr 1fr; gap:8px; align-items:center; margin-bottom:8px;">
+          <div style="font-size:11px; font-weight:600; color:var(--muted);">&gt; 5 kg /kg add'l (₹)</div>
+          <input type="number" id="fbaw_pkg5_local" step="0.5" style="text-align:center;" />
+          <input type="number" id="fbaw_pkg5_regional" step="0.5" style="text-align:center;" />
+          <input type="number" id="fbaw_pkg5_national" step="0.5" style="text-align:center;" />
+        </div>
+
+        <div class="fee-section-title">Pick &amp; Pack Fee (₹ per unit)</div>
+        <div class="fee-grid fee-grid-2">
+          <div class="fee-cell"><label>Standard size (&lt;12kg)</label><input type="number" id="fba_pickpack_std" step="1" /></div>
+          <div class="fee-cell"><label>Heavy &amp; Bulky (≥12kg)</label><input type="number" id="fba_pickpack_heavy" step="1" /></div>
+        </div>
+
+        <div class="fee-section-title">Monthly Storage Fee (₹ per cubic foot)</div>
+        <div class="fee-grid fee-grid-2">
+          <div class="fee-cell"><label>Off-peak (Jan–Sep)</label><input type="number" id="fba_storage_offpeak" step="1" /></div>
+          <div class="fee-cell"><label>Peak (Oct–Dec)</label><input type="number" id="fba_storage_peak" step="1" /></div>
+        </div>
+      </div>
+
+    </div><!-- /modal-body -->
+
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="resetFeesToDefaults()">↺ Reset to Built-in Defaults</button>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-ghost" onclick="closeFeeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveFees()">Save &amp; Apply Fees</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MAIN LAYOUT
+══════════════════════════════════════════════ -->
+<div class="layout">
+
+  <!-- LEFT: INPUTS -->
+  <div class="inputs-panel">
+
+    <div class="card autofill-card">
+      <div class="card-title"><span class="icon">🔍</span> Quick Product Lookup <span style="font-size:10px; font-weight:400; color:var(--muted); margin-left:6px;">ellementry catalogue</span></div>
+      <div style="position:relative;">
+        <div class="search-row">
+          <input type="text" id="autofill-query" placeholder='Type product name or SKU…' oninput="showSuggestions()" onkeydown="handleSearchKey(event)" autocomplete="off" />
+          <button class="btn-search" onclick="doAutofill()">⚡ Fill</button>
+        </div>
+        <div id="search-dropdown" class="search-dropdown" style="display:none;"></div>
+      </div>
+      <div class="search-status info" id="autofill-status"></div>
+      <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:6px; padding:6px 12px; background:var(--input-bg); border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:11px; font-weight:600; color:var(--muted);">
+          📥 Import CSV
+          <input type="file" id="csv-import" accept=".csv" style="display:none" onchange="importCSV(event)" />
+        </label>
+        <button onclick="downloadTemplate()" style="padding:6px 12px; background:var(--input-bg); border:1px solid var(--border); border-radius:6px; font-size:11px; font-weight:600; color:var(--muted); cursor:pointer;">📄 Download Template</button>
+        <span id="db-count" style="font-size:11px; color:var(--muted); align-self:center; margin-left:auto;"></span>
+      </div>
+      <div class="autofill-hint" style="margin-top:6px;">Fills price, weight &amp; category. COGS entered manually. Import CSV to add pre-launch products.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📦</span> Product Details</div>
+      <div class="field">
+        <label>Category</label>
+        <select id="category">
+          <optgroup label="Furniture">
+            <option value="large-furniture">Large Furniture — Sofa, Beds, Wardrobes, Recliners, Dining</option>
+            <option value="furniture-other">Furniture — Other Products</option>
+          </optgroup>
+          <optgroup label="Home & Decor">
+            <option value="home-decor">Home Décor Products</option>
+          </optgroup>
+          <optgroup label="Kitchen & Tableware">
+            <option value="glassware-ceramicware">Kitchen — Glassware & Ceramicware</option>
+            <option value="cookware-tableware" selected>Cookware, Tableware & Dinnerware</option>
+            <option value="kitchen-tools">Kitchen Tools & Supplies</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>MRP <span class="hint">from product listing, incl. GST</span></label>
+          <div class="input-prefix"><span>₹</span><input type="number" id="mrp" value="1500" min="0" step="1" oninput="computeSellingPrice()" /></div>
+        </div>
+        <div class="field">
+          <label>Discount on MRP <span class="hint">% off</span></label>
+          <div class="input-suffix"><input type="number" id="discount" value="0" min="0" max="90" step="0.5" oninput="computeSellingPrice()" /><span>%</span></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Selling Price <span class="hint">after discount</span></label>
+          <div class="input-prefix"><span>₹</span><input type="number" id="price" min="0" step="1" style="background:#F0FFF4;font-weight:700;color:#1A7F37;" readonly /></div>
+        </div>
+        <div class="field">
+          <label>Your COGS <span class="hint">per unit — auto 25% of MRP, edit to override</span></label>
+          <div class="input-prefix"><span>₹</span><input type="number" id="cogs" value="600" min="0" step="1" oninput="this.dataset.manual='1'" /></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🚚</span> Fulfillment Model</div>
+      <div class="fulfil-toggle">
+        <button id="btn-selfship" onclick="setFulfil('selfship')">Self-Ship<small>Your warehouse</small></button>
+        <button id="btn-easyship" class="active" onclick="setFulfil('easyship')">Easy Ship<small>Amazon picks up</small></button>
+        <button id="btn-fba" onclick="setFulfil('fba')">FBA<small>Stored at FC</small></button>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Actual Weight <span class="hint">grams</span></label>
+          <div class="input-suffix"><input type="number" id="weight" value="800" min="0" step="50" /><span>g</span></div>
+        </div>
+        <div class="field conditional visible" id="dims-field">
+          <label>Dimensions <span class="hint">L×W×H cm</span></label>
+          <div style="display:flex; gap:4px;">
+            <input type="number" id="dim-l" value="20" min="0" step="1" placeholder="L" style="text-align:center" />
+            <input type="number" id="dim-w" value="15" min="0" step="1" placeholder="W" style="text-align:center" />
+            <input type="number" id="dim-h" value="10" min="0" step="1" placeholder="H" style="text-align:center" />
+          </div>
+        </div>
+      </div>
+      <div id="vol-weight-note" class="conditional visible" style="font-size:11px; color:var(--muted); margin-bottom:10px;"></div>
+      <div id="zone-section" class="conditional visible">
+        <label style="margin-bottom:8px; display:block;">Delivery Zone Mix <span class="hint">must total 100%</span></label>
+        <div class="zone-row"><div class="zone-label">Local</div><input type="range" id="z-local" min="0" max="100" value="20" oninput="syncZones()" /><div class="zone-val" id="zv-local">20%</div></div>
+        <div class="zone-row"><div class="zone-label">Regional</div><input type="range" id="z-regional" min="0" max="100" value="40" oninput="syncZones()" /><div class="zone-val" id="zv-regional">40%</div></div>
+        <div class="zone-row"><div class="zone-label">National</div><input type="range" id="z-national" min="0" max="100" value="35" oninput="syncZones()" /><div class="zone-val" id="zv-national">35%</div></div>
+        <div class="zone-row"><div class="zone-label">Special</div><input type="range" id="z-special" min="0" max="100" value="5" oninput="syncZones()" /><div class="zone-val" id="zv-special">5%</div></div>
+        <div class="zone-total" id="zone-total">Total: 100%</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">💰</span> Your Costs</div>
+      <div class="two-col">
+        <div class="field">
+          <label>Extra Packaging <span class="hint">if not in COGS</span></label>
+          <div class="input-prefix"><span>₹</span><input type="number" id="packaging" value="0" min="0" step="1" /></div>
+        </div>
+        <div class="field">
+          <label id="freight-label">Own Freight / Unit</label>
+          <div class="input-prefix"><span>₹</span><input type="number" id="freight" value="0" min="0" step="1" /></div>
+        </div>
+      </div>
+      <label id="freight-hint" style="font-size:11px; color:var(--muted); margin-top:-6px; display:block; margin-bottom:10px;"></label>
+      <div class="two-col">
+        <div class="field">
+          <label>Returns — Saleable <span class="hint">% of orders, item resellable</span></label>
+          <div class="input-suffix"><input type="number" id="return-rate-saleable" value="5" min="0" max="100" step="0.5" /><span>%</span></div>
+        </div>
+        <div class="field">
+          <label>Returns — Damaged <span class="hint">% of orders, item written off</span></label>
+          <div class="input-suffix"><input type="number" id="return-rate-damaged" value="5" min="0" max="100" step="0.5" /><span>%</span></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Return Handling Cost <span class="hint">per return (reverse courier + inspection)</span></label>
+        <div class="input-prefix"><span>₹</span><input type="number" id="return-cost" value="150" min="0" step="10" /></div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Liquidation Provision <span class="hint">% of selling price</span></label>
+          <div class="input-suffix"><input type="number" id="liquidation" value="5" min="0" max="30" step="0.5" /><span>%</span></div>
+        </div>
+        <div class="field">
+          <label>Damage / Loss Provision <span class="hint">% of COGS</span></label>
+          <div class="input-suffix"><input type="number" id="damage-prov" value="2" min="0" max="20" step="0.5" /><span>%</span></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Amazon Ads ACoS <span class="hint">% of selling price</span></label>
+          <div class="input-suffix"><input type="number" id="acos" value="12" min="0" max="100" step="0.5" /><span>%</span></div>
+        </div>
+        <div class="field">
+          <label>Agency Commission <span class="hint">% of selling price</span></label>
+          <div class="input-suffix"><input type="number" id="agency-comm" value="10" min="0" max="30" step="0.5" /><span>%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="fba-section" class="card conditional">
+      <div class="card-title"><span class="icon">🏭</span> FBA Storage</div>
+      <div class="two-col">
+        <div class="field">
+          <label>Storage Season</label>
+          <select id="storage-season">
+            <option value="offpeak">Jan–Sep (Off-Peak)</option>
+            <option value="peak">Oct–Dec (Peak)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Avg. Inventory at FC <span class="hint">units</span></label>
+          <input type="number" id="fba-units" value="50" min="1" step="1" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Inbound Logistics <span class="hint">% of selling price (FBA only)</span></label>
+        <div class="input-suffix"><input type="number" id="inbound" value="2" min="0" max="20" step="0.5" /><span>%</span></div>
+      </div>
+    </div>
+
+    <div class="data-note">
+      <strong>Fee Data</strong> — <span id="data-note-updated"></span><br/>
+      All fees ex-GST. Amazon levies 18% GST on their fees — you recover this as ITC.<br/>
+      <span style="color:var(--yellow); font-weight:600;">⚠ est</span> = Easy Ship weight handling, FBA rates are estimates.
+      Click <strong>⚙ Fee Tables</strong> in the header to edit and keep them current.
+    </div>
+
+  </div>
+
+  <!-- RIGHT: RESULTS -->
+  <div class="results-panel">
+    <div class="compare-toggle">
+      <button id="view-single" class="active" onclick="setView('single')">Unit P&amp;L</button>
+      <button id="view-compare" onclick="setView('compare')">Compare All 3 Methods</button>
+    </div>
+
+    <div id="single-view">
+      <div class="card">
+        <div class="card-title"><span class="icon">📊</span> Unit P&amp;L Breakdown</div>
+        <div id="waterfall"></div>
+        <div class="margin-grid">
+          <div id="gross-box" class="margin-box neutral">
+            <div class="mb-label">Gross Margin</div>
+            <div id="gross-pct" class="mb-value">—</div>
+            <div id="gross-abs" class="mb-abs">ex. ads</div>
+          </div>
+          <div id="contrib-box" class="margin-box neutral">
+            <div class="mb-label">Contribution Margin</div>
+            <div id="contrib-pct" class="mb-value">—</div>
+            <div id="contrib-abs" class="mb-abs">after ads</div>
+          </div>
+        </div>
+        <div class="breakeven-bar">
+          <span class="be-label">⚡ Breakeven Price</span>
+          <span id="be-price" class="be-val">—</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon">🔍</span> Fee Summary</div>
+        <div id="fee-summary"></div>
+      </div>
+    </div>
+
+    <div id="compare-view" style="display:none;">
+      <div class="card">
+        <div class="card-title"><span class="icon">⚖️</span> Fulfillment Method Comparison</div>
+        <div id="compare-table-container"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /layout -->
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  ELLEMENTRY PRODUCT DATABASE  (for autofill search)
+// ══════════════════════════════════════════════════════════════════
+// ── Category guesser from SKU prefix ──
+function guessCategoryFromSKU(sku, price) {
+  const s = sku.toUpperCase();
+  if (/^WDF/.test(s)) return price >= 15000 ? 'large-furniture' : 'furniture-other';
+  if (/^(SWSWA|SWETA|GSSWA|GSTEA|GSTEA)/.test(s)) return 'glassware-ceramicware';
+  if (/^(SWTEA|SWKEA|WDTEA|WDSWA|TCTEA|MAETA)/.test(s)) return 'cookware-tableware';
+  if (/^(WDKEA|MEKEA|MAKEA|SSTEA)/.test(s)) return 'kitchen-tools';
+  if (/^(WDDEA|SWDEA|ECDEA|TCDEA|TCFNA|MEDEA|PWDEA|PWGCA|GSFNA|TCFNA|CDDEA|GSDEA)/.test(s)) return 'home-decor';
+  if (/^(CTTEA|CTKEA)/.test(s)) return 'home-decor';
+  return 'home-decor';
+}
+
+// ── Built-in product catalogue (mrp = compare_at_price from ellementry.com, Apr 2026) ──
+const BUILTIN_PRODUCTS = [
+  // Furniture
+  {name:'Walnut Haze Upholstered Bench- 2',         sku:'WDFRA3992', mrp:20590, weight:0,    L:0,  W:0,  H:0},
+  {name:'Walnut Haze Upholstered Bench- 1',         sku:'WDFRA3991', mrp:17190, weight:0,    L:0,  W:0,  H:0},
+  {name:'Monochrome Upholstered Bench',             sku:'WDFRA3990', mrp:17190, weight:0,    L:0,  W:0,  H:0},
+  {name:'Sundowner Coffee Table',                   sku:'WDFRA4568', mrp:31750, weight:11000, L:0,  W:0,  H:0},
+  {name:'Sundowner Console Table',                  sku:'WDFRA4567', mrp:29750, weight:9200,  L:0,  W:0,  H:0},
+  {name:'Entwine Coffee Table',                     sku:'WDFRA4566', mrp:31990, weight:9200,  L:0,  W:0,  H:0},
+  {name:'Entwine Console Table',                    sku:'WDFRA4565', mrp:31990, weight:9200,  L:0,  W:0,  H:0},
+  // Wooden serveware & trays
+  {name:'Mango Memory Wooden Platter Set of 2',     sku:'WDSWA4064', mrp:2390,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Apple Affair Wooden Platter Set of 2',     sku:'WDSWA4063', mrp:1890,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Ayraki Nested Tray Set of 3',              sku:'WDSWA3340', mrp:4750,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Fleur D\'or Cake Stand with Base',         sku:'WDSWA2922', mrp:2050,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Onyx Mango Wood Tray',                     sku:'WDTEA2224', mrp:2890,  weight:1450, L:0,  W:0,  H:0},
+  {name:'Onyx Mango Wood Basket',                   sku:'WDTEA2223', mrp:3790,  weight:1100, L:0,  W:0,  H:0},
+  {name:'Rayas Roti Box',                           sku:'WDTEA3316', mrp:3090,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Orbis Jar - Large',                        sku:'WDKEA2840', mrp:2390,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Boxy wooden shelf with drawer',            sku:'WDDEA3304', mrp:4150,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Wall Cabinet with Mirror - Rectangle',     sku:'WDDEA3308', mrp:11290, weight:0,    L:0,  W:0,  H:0},
+  {name:'Wall Cabinet with Mirror - Square',        sku:'WDDEA3307', mrp:14450, weight:0,    L:0,  W:0,  H:0},
+  {name:'Old World Wall Mirror - Rectangle',        sku:'WDDEA2828', mrp:8790,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Farmhouse Flair Wall Mirror - Round',      sku:'WDDEA2829', mrp:5650,  weight:0,    L:0,  W:0,  H:0},
+  // Ceramic mugs & drinkware
+  {name:'Matcha Ceramic Mug Set of 2',              sku:'SWSWA3884', mrp:1050,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Chrome Ceramic Mug Set of 2',              sku:'SWSWA3885', mrp:1050,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Amber Love Ceramic Mug',                   sku:'SWETA2220', mrp:450,   weight:300,  L:0,  W:0,  H:0},
+  // Ceramic tableware & bowls
+  {name:'Classic Beige Ceramic Cake Stand',         sku:'SWSWA3895', mrp:1990,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Fiore Ceramic Salad Bowl',                 sku:'SWTEA1767', mrp:1250,  weight:800,  L:0,  W:0,  H:0},
+  {name:'Rustic Reef Ceramic Pasta Bowl',           sku:'SWTEA2775', mrp:1350,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Serene Sky Ceramic Nut Bowl',              sku:'SWKEA3237', mrp:490,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Serene Sky Ceramic Bowl - Small',          sku:'SWKEA3236', mrp:390,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Serene Sky Ceramic Side Plate',            sku:'SWTEA3235', mrp:990,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Serene Sky Ceramic Dinner Plate',          sku:'SWTEA3234', mrp:1250,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Rayas Nut Bowl Small',                     sku:'GSSWA3291', mrp:1890,  weight:0,    L:0,  W:0,  H:0},
+  // Ceramic storage & jars
+  {name:'Classic Beige Ceramic Jar Large',          sku:'SWKEA3891', mrp:1250,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Classic Beige Ceramic Jar Small',          sku:'SWKEA3890', mrp:850,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Rustic Reef Ceramic Jar With Wooden Lid',  sku:'SWKEA2779', mrp:990,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Rustic Reef Ceramic Jug With Wooden Lid',  sku:'SWTEA2777', mrp:2450,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Khomo Ceramic Artifact',                   sku:'SWDEA2234', mrp:2190,  weight:1100, L:0,  W:0,  H:0},
+  // Ceramic planters
+  {name:'Amber Love Ceramic Planter Curved',        sku:'SWDEA4124', mrp:1350,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Amber Love Ceramic Planter Straight',      sku:'SWDEA4123', mrp:1350,  weight:0,    L:0,  W:0,  H:0},
+  // Glass drinkware & bottles
+  {name:'Water Ritual Glass Bottles Set of 2',      sku:'GSTEA4110', mrp:1690,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Water Ritual Glass Bottle',                sku:'GSTEA4109', mrp:890,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Drink Up Glass Bottles Set of 2',          sku:'GSTEA4108', mrp:1690,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Drink Up Glass Bottle',                    sku:'GSTEA4107', mrp:890,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Quoise Tall Tumbler Set of 2',             sku:'GSTEA3960', mrp:1550,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Quoise Conical Coffee Mug Set of 2',       sku:'GSSWA3287', mrp:1350,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Quoise Round Coffee Mug Set of 2',         sku:'GSSWA3286', mrp:1350,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Soyuz Glass Bottle with Tumbler',          sku:'GSTEA3285', mrp:1090,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Midori Carafe With Tumbler',               sku:'GSTEA2939', mrp:1890,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Apple & Pear Glass Jar Set of 2',          sku:'GSKEA2240', mrp:2650,  weight:1100, L:0,  W:0,  H:0},
+  {name:'Allora Glass Jar',                         sku:'GSKEA2239', mrp:1590,  weight:700,  L:0,  W:0,  H:0},
+  {name:'Shaye Glass Cloche',                       sku:'MAETA2237', mrp:3690,  weight:3900, L:0,  W:0,  H:0},
+  // Metal storage & kitchen
+  {name:'Charcoal Brown Twine Wire Bread Box',      sku:'MEKEA3273', mrp:2390,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Charcoal Brown Bread Box with Lid',        sku:'MEKEA3272', mrp:2290,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Charcoal Brown Sugar Jar',                 sku:'MEKEA3271', mrp:990,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Charcoal Brown Tea Jar',                   sku:'MEKEA3270', mrp:990,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Charcoal Brown Coffee Jar',                sku:'MEKEA3269', mrp:990,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Charcoal Brown Potato Storage Bin',        sku:'MEKEA3268', mrp:1850,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Charcoal Brown Garlic Storage Bin',        sku:'MEKEA3267', mrp:890,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Charcoal Brown Onion Storage Bin',         sku:'MEKEA3266', mrp:1190,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Charcoal Brown Grain Storage Barrel',      sku:'MEKEA3265', mrp:3390,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Charcoal Brown Rice Storage Barrel',       sku:'MEKEA3264', mrp:3390,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Kuma Metal Oval Lantern Set of 2',         sku:'MEDEA2971', mrp:990,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Kuma Metal Round Lantern Set of 2',        sku:'MEDEA2970', mrp:990,   weight:0,    L:0,  W:0,  H:0},
+  // Marble & stone
+  {name:'Verde Marble Mortar & Pestle',             sku:'MAKEA2689', mrp:2390,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Zigzag Marble Chopping Board Stand',       sku:'MAKEA2227', mrp:1950,  weight:2000, L:0,  W:0,  H:0},
+  {name:'Erebus Marble Mortar & Pestle',            sku:'MAKEA2226', mrp:2290,  weight:3000, L:0,  W:0,  H:0},
+  {name:'Gondola Marble Platter with Brass Legs',   sku:'MAETA2225', mrp:3090,  weight:2800, L:0,  W:0,  H:0},
+  // Textiles
+  {name:'Macrame Cotton Table Runner Terracotta',   sku:'CTTEA2276', mrp:2350,  weight:600,  L:0,  W:0,  H:0},
+  {name:'Macrame Cotton Table Runner Natural',      sku:'CTTEA2275', mrp:2350,  weight:600,  L:0,  W:0,  H:0},
+  {name:'Tropical Paradise Linen Table Runner',     sku:'CTTEA2271', mrp:2090,  weight:335,  L:0,  W:0,  H:0},
+  {name:'Happy Fall Linen Table Runner',            sku:'CTTEA2270', mrp:2090,  weight:335,  L:0,  W:0,  H:0},
+  // Cutlery & serveware
+  {name:'Enigma Gold Serving Set Of Two',           sku:'SSTEA2393', mrp:1490,  weight:270,  L:0,  W:0,  H:0},
+  {name:'Aura Gold Serving Set of Two',             sku:'SSTEA2388', mrp:1490,  weight:230,  L:0,  W:0,  H:0},
+  {name:'Aura Gold Cake Set of Two',                sku:'SSTEA2387', mrp:1490,  weight:200,  L:0,  W:0,  H:0},
+  {name:'Aura Gold Cutlery Set of Four',            sku:'SSTEA2386', mrp:1550,  weight:210,  L:0,  W:0,  H:0},
+  // Candles & decor
+  {name:'Winter Garden Botanical Candle 4"',        sku:'PWGCA4055', mrp:890,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Summer Dreaming Botanical Candle 4"',      sku:'PWGCA4054', mrp:890,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Florals Afloat Floating Candle Set of 6',  sku:'PWDEA4127', mrp:290,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Gaudeep Fleur D\'or Wax Filler',           sku:'CDDEA3254', mrp:890,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Gaudeep Wax Filler Set of 2',              sku:'CDDEA3253', mrp:790,   weight:0,    L:0,  W:0,  H:0},
+  {name:'Gaudeep Wax Filler',                       sku:'CDDEA3252', mrp:890,   weight:0,    L:0,  W:0,  H:0},
+  // Diyas & festive
+  {name:'Kanchdeep Diya Set of 24',                 sku:'GSDEA3279', mrp:1490,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Trigun Terracotta Diya Set of 22',         sku:'TCDEA2968', mrp:1090,  weight:0,    L:0,  W:0,  H:0},
+  // Sculptures & art
+  {name:'Restive Face Ecomix Sculpture - White',    sku:'ECDEA2871', mrp:2090,  weight:0,    L:0,  W:0,  H:0},
+  {name:'Spellbound Face Ecomix Sculpture',         sku:'ECDEA2870', mrp:1650,  weight:0,    L:0,  W:0,  H:0},
+  // Lamps
+  {name:'Lesya Terracotta Table Lamp',              sku:'TCFNA2212', mrp:5550,  weight:3500, L:0,  W:0,  H:0},
+  {name:'Muse Glass Lamp With Shade',               sku:'GSFNA2186', mrp:5550,  weight:1800, L:0,  W:0,  H:0},
+];
+
+// ── Merge builtins with any imported products from localStorage ──
+function getAllProducts() {
+  let imported = [];
+  try {
+    const raw = localStorage.getItem('dafl_imported_products');
+    if (raw) imported = JSON.parse(raw);
+  } catch(e) {}
+  return [...BUILTIN_PRODUCTS, ...imported];
+}
+
+function updateDBCount() {
+  const all = getAllProducts();
+  const imp = all.length - BUILTIN_PRODUCTS.length;
+  const el = document.getElementById('db-count');
+  if (el) el.textContent = all.length + ' products' + (imp > 0 ? ' (' + imp + ' imported)' : ' (live from ellementry.com)');
+}
+
+function computeSellingPrice() {
+  const mrp      = parseFloat(document.getElementById('mrp').value) || 0;
+  const discount = parseFloat(document.getElementById('discount').value) || 0;
+  const sp       = Math.round(mrp * (1 - discount / 100));
+  document.getElementById('price').value = sp;
+  // Auto-set COGS = 25% of MRP unless user has manually edited it
+  const cogsEl = document.getElementById('cogs');
+  if (!cogsEl.dataset.manual) {
+    cogsEl.value = Math.round(mrp * 0.25);
+  }
+  calculate();
+}
+
+// ── Autofill search ──
+function showSuggestions() {
+  const query = document.getElementById('autofill-query').value.trim().toLowerCase();
+  const dd = document.getElementById('search-dropdown');
+  if (query.length < 2) { dd.style.display = 'none'; return; }
+  const all = getAllProducts();
+  const matches = all.filter(p =>
+    p.name.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query)
+  ).slice(0, 25);
+  if (!matches.length) { dd.style.display = 'none'; return; }
+  const catNames = { 'home-decor':'Home Decor', 'glassware-ceramicware':'Glassware/Ceramic',
+    'cookware-tableware':'Cookware', 'kitchen-tools':'Kitchen',
+    'large-furniture':'Furniture', 'furniture-other':'Furniture' };
+  dd.innerHTML = matches.map(p => {
+    const cat = p.category || guessCategoryFromSKU(p.sku, p.price);
+    const catLabel = catNames[cat] || cat;
+    const encoded = encodeURIComponent(JSON.stringify(p));
+    const dispPrice = p.mrp || p.price;
+    return '<div class="search-dropdown-item" onclick="selectProduct(decodeURIComponent(\''+encoded+'\'))">'
+      + '<span class="item-name">' + p.name + '</span>'
+      + '<span class="item-meta">MRP ₹' + dispPrice.toLocaleString('en-IN') + ' � ' + catLabel + '</span>'
+      + '</div>';
+  }).join('');
+  dd.style.display = 'block';
+}
+
+function selectProduct(jsonOrObj) {
+  const p = typeof jsonOrObj === 'string' ? JSON.parse(jsonOrObj) : jsonOrObj;
+  const cat = p.category || guessCategoryFromSKU(p.sku, p.price);
+  document.getElementById('mrp').value      = p.mrp || p.price;
+  delete document.getElementById('cogs').dataset.manual;  // reset to auto 25%
+  document.getElementById('category').value = cat;
+  if (p.weight) document.getElementById('weight').value = p.weight;
+  if (p.L) {
+    document.getElementById('dim-l').value = p.L;
+    document.getElementById('dim-w').value = p.W;
+    document.getElementById('dim-h').value = p.H;
+  }
+  document.getElementById('autofill-query').value = p.name;
+  document.getElementById('search-dropdown').style.display = 'none';
+  computeSellingPrice();
+  const status = document.getElementById('autofill-status');
+  const missingDims = !p.weight || !p.L;
+  status.className = 'search-status ok';
+  status.textContent = '✓ ' + p.name + ' (' + p.sku + ')' + (missingDims ? ' — ⚠ enter weight/dims manually.' : ' — enter COGS to complete.');
+  setTimeout(() => { status.textContent = ''; status.className = 'search-status info'; }, 8000);
+  calculate();
+}
+
+function handleSearchKey(e) {
+  if (e.key === 'Escape') {
+    document.getElementById('search-dropdown').style.display = 'none';
+  } else if (e.key === 'Enter') {
+    doAutofill();
+  }
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.autofill-card')) {
+    const dd = document.getElementById('search-dropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
+
+function doAutofill() {
+  const query = document.getElementById('autofill-query').value.trim().toLowerCase();
+  const status = document.getElementById('autofill-status');
+
+  if (!query) {
+    status.className = 'search-status err';
+    status.textContent = 'Please enter a product name or SKU.';
+    return;
+  }
+
+  const all = getAllProducts();
+  let found = null;
+  for (const p of all) {
+    if (p.name.toLowerCase().includes(query) ||
+        p.sku.toLowerCase() === query ||
+        p.sku.toLowerCase().includes(query)) {
+      found = p;
+      break;
+    }
+  }
+
+  if (!found) {
+    status.className = 'search-status err';
+    status.textContent = 'Not found in ' + all.length + ' products. Try a product name or exact SKU.';
+    return;
+  }
+
+  const cat = found.category || guessCategoryFromSKU(found.sku, found.price);
+  document.getElementById('mrp').value      = found.mrp || found.price;
+  delete document.getElementById('cogs').dataset.manual;  // reset to auto 25%
+  document.getElementById('category').value = cat;
+  if (found.weight) document.getElementById('weight').value = found.weight;
+  if (found.L)      { document.getElementById('dim-l').value = found.L; document.getElementById('dim-w').value = found.W; document.getElementById('dim-h').value = found.H; }
+  document.getElementById('autofill-query').value = '';
+
+  const missingDims = !found.weight || !found.L;
+  status.className = 'search-status ok';
+  status.textContent = '✓ ' + found.name + ' (SKU: ' + found.sku + ')' + (missingDims ? ' — ⚠ weight/dims not on site, please enter manually.' : ' — enter COGS to complete.');
+  setTimeout(() => { status.textContent = ''; status.className = 'search-status info'; }, 8000);
+  calculate();
+}
+
+// ── CSV Import ──
+const CSV_HEADERS = ['product_name','sku','category','mrp','cogs','packaging_cost','gst_rate','weight_grams','length_cm','width_cm','height_cm','notes'];
+const CATEGORY_VALUES = ['large-furniture','furniture-other','home-decor','glassware-ceramicware','cookware-tableware','kitchen-tools'];
+
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const status = document.getElementById('autofill-status');
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const lines = e.target.result.split('\n').map(l => l.trim()).filter(l => l);
+      if (lines.length < 2) throw new Error('File appears empty.');
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z_]/g,''));
+      const nameIdx   = headers.indexOf('product_name');
+      const skuIdx    = headers.indexOf('sku');
+      const priceIdx  = headers.indexOf('mrp');
+      const weightIdx = headers.indexOf('weight_grams');
+      const lIdx      = headers.indexOf('length_cm');
+      const wIdx      = headers.indexOf('width_cm');
+      const hIdx      = headers.indexOf('height_cm');
+      const catIdx    = headers.indexOf('category');
+      if (nameIdx < 0 || skuIdx < 0 || priceIdx < 0) throw new Error('Missing required columns: product_name, sku, mrp');
+      const products = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g,''));
+        const name = cols[nameIdx];
+        if (!name) continue;
+        products.push({
+          name:     name,
+          sku:      cols[skuIdx]    || '',
+          price:    parseFloat(cols[priceIdx]) || 0,
+          weight:   weightIdx >= 0 ? (parseFloat(cols[weightIdx]) || 0) : 0,
+          L:        lIdx      >= 0 ? (parseFloat(cols[lIdx])      || 0) : 0,
+          W:        wIdx      >= 0 ? (parseFloat(cols[wIdx])      || 0) : 0,
+          H:        hIdx      >= 0 ? (parseFloat(cols[hIdx])      || 0) : 0,
+          category: catIdx    >= 0 ? (cols[catIdx] || '') : '',
+          _imported: true
+        });
+      }
+      localStorage.setItem('dafl_imported_products', JSON.stringify(products));
+      updateDBCount();
+      status.className = 'search-status ok';
+      status.textContent = '✓ Imported ' + products.length + ' products successfully.';
+      setTimeout(() => { status.textContent = ''; status.className = 'search-status info'; }, 5000);
+    } catch(err) {
+      status.className = 'search-status err';
+      status.textContent = '✗ Import failed: ' + err.message;
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ── Download Template ──
+function downloadTemplate() {
+  const rows = [
+    CSV_HEADERS.join(','),
+    '# Category must be one of: ' + CATEGORY_VALUES.join(' | '),
+    'Eclipse Ceramic Coffee Mug Set of 2,SWETA2197,glassware-ceramicware,1090,320,30,12,800,14,11,11,Live product',
+    'My New Pre-Launch Vase,NEW-SKU-001,home-decor,1500,400,40,12,600,18,12,15,Launching Q3 2026',
+  ];
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ellementry_amazon_products_template.csv';
+  a.click();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  DEFAULT FEE CONSTANTS  (edit via ⚙ Fee Tables modal)
+// ══════════════════════════════════════════════════════════════════
+
+const DEFAULT_FEES = {
+  lastUpdated: '2026-04-01',
+  referral: {
+    'large-furniture':       { t1: 0, t2: 15.5, t3: 11.0 },
+    'furniture-other':       { t1: 0, t2: 15.5, t3: 11.0 },
+    'home-decor':            { t1: 0, t2: 17.0 },
+    'glassware-ceramicware': { t1: 0, t2: 12.5 },
+    'cookware-tableware':    { t1: 0, t2: 12.5 },
+    'kitchen-tools':         { t1: 0, t2: 12.5 }
+  },
+  closing: {
+    fba:      [26, 22, 27, 52],       // ₹0-300 / ₹301-500 / ₹501-1000 / >₹1000
+    easyship: [1, 22, 45, 76],        // ₹0-300 / ₹301-500 / ₹501-1000 / >₹1000
+    selfship: [20, 26, 51, 101]       // ₹0-300 / ₹301-500 / ₹501-1000 / >₹1000
+  },
+  esWeight: {
+    first500: { local: 35, regional: 51, national: 65, special: 90 },
+    add500:   { local: 14, regional: 17, national: 21, special: 30 }
+  },
+  // FBA Weight Handling — Standard STEP (Amazon Standard) as of Apr 2026
+  // slabs: fixed fee per shipment for ≤500g / ≤1kg / ≤2kg
+  // perKg2_5: additional ₹ per kg for weight 2kg–5kg (above 2kg base ≤2kg slab)
+  // perKg5plus: additional ₹ per kg for weight >5kg
+  fbaWeight: {
+    slabs: [
+      { maxG: 500,  local: 28, regional: 39, national: 65 },
+      { maxG: 1000, local: 38, regional: 54, national: 85 },
+      { maxG: 2000, local: 55, regional: 78, national: 122 }
+    ],
+    perKg2_5:   { local: 18, regional: 24, national: 34 },
+    perKg5plus: { local: 10, regional: 13, national: 18 }
+  },
+  fbaPickPack: { standard: 17, heavy: 26 },
+  fbaStorage:  { offpeak: 50, peak: 170 }
+};
+
+// ── Load from localStorage or use defaults ──
+let FEES = loadFees();
+
+function loadFees() {
+  try {
+    const saved = localStorage.getItem('dafl_amz_fees');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_FEES));
+}
+
+function saveFees() {
+  // Read all modal inputs into FEES
+  const d = document;
+  FEES.lastUpdated = d.getElementById('fee-last-updated').value || new Date().toISOString().split('T')[0];
+
+  // Referral
+  const refCats = {
+    'large-furniture': ['t1','t2','t3'],
+    'furniture-other': ['t1','t2','t3'],
+    'home-decor':      ['t1','t2'],
+    'glassware-ceramicware': ['t1','t2'],
+    'cookware-tableware':    ['t1','t2'],
+    'kitchen-tools':         ['t1','t2']
+  };
+  for (const [cat, tiers] of Object.entries(refCats)) {
+    tiers.forEach(t => {
+      const el = d.getElementById(`ref_${cat}_${t}`);
+      if (el) FEES.referral[cat][t] = parseFloat(el.value) || 0;
+    });
+  }
+
+  // Closing
+  const closeMap = { fba: 4, easyship: 4, selfship: 4 };
+  for (const [ch, bands] of Object.entries(closeMap)) {
+    FEES.closing[ch] = [];
+    for (let i = 1; i <= bands; i++) {
+      const el = d.getElementById(`close_${ch}_b${i}`);
+      FEES.closing[ch].push(el ? (parseFloat(el.value) || 0) : 0);
+    }
+  }
+
+  // Easy Ship weight
+  ['local','regional','national','special'].forEach(z => {
+    FEES.esWeight.first500[z] = parseFloat(d.getElementById(`esw_first500_${z}`).value) || 0;
+    FEES.esWeight.add500[z]   = parseFloat(d.getElementById(`esw_add500_${z}`).value)   || 0;
+  });
+
+  // FBA weight (slab model)
+  ['local','regional','national'].forEach(z => {
+    FEES.fbaWeight.slabs[0][z]   = parseFloat(d.getElementById(`fbaw_s1_${z}`).value)   || 0;
+    FEES.fbaWeight.slabs[1][z]   = parseFloat(d.getElementById(`fbaw_s2_${z}`).value)   || 0;
+    FEES.fbaWeight.slabs[2][z]   = parseFloat(d.getElementById(`fbaw_s3_${z}`).value)   || 0;
+    FEES.fbaWeight.perKg2_5[z]   = parseFloat(d.getElementById(`fbaw_pkg2_${z}`).value) || 0;
+    FEES.fbaWeight.perKg5plus[z] = parseFloat(d.getElementById(`fbaw_pkg5_${z}`).value) || 0;
+  });
+
+  // FBA pick & pack + storage
+  FEES.fbaPickPack.standard = parseFloat(d.getElementById('fba_pickpack_std').value)   || 0;
+  FEES.fbaPickPack.heavy    = parseFloat(d.getElementById('fba_pickpack_heavy').value) || 0;
+  FEES.fbaStorage.offpeak   = parseFloat(d.getElementById('fba_storage_offpeak').value) || 0;
+  FEES.fbaStorage.peak      = parseFloat(d.getElementById('fba_storage_peak').value)   || 0;
+
+  localStorage.setItem('dafl_amz_fees', JSON.stringify(FEES));
+  closeFeeModal();
+  updateFreshnessUI();
+  calculate();
+}
+
+function resetFeesToDefaults() {
+  if (!confirm('Reset all fee tables to the built-in defaults (April 2026 data)? Your edits will be lost.')) return;
+  FEES = JSON.parse(JSON.stringify(DEFAULT_FEES));
+  localStorage.setItem('dafl_amz_fees', JSON.stringify(FEES));
+  populateModalInputs();
+  updateFreshnessUI();
+  calculate();
+}
+
+// ── Populate modal fields from FEES ──
+function populateModalInputs() {
+  const d = document;
+  d.getElementById('fee-last-updated').value = FEES.lastUpdated || '';
+
+  // Referral
+  const refCats = {
+    'large-furniture': ['t1','t2','t3'],
+    'furniture-other': ['t1','t2','t3'],
+    'home-decor':      ['t1','t2'],
+    'glassware-ceramicware': ['t1','t2'],
+    'cookware-tableware':    ['t1','t2'],
+    'kitchen-tools':         ['t1','t2']
+  };
+  for (const [cat, tiers] of Object.entries(refCats)) {
+    tiers.forEach(t => {
+      const el = d.getElementById(`ref_${cat}_${t}`);
+      if (el) el.value = FEES.referral[cat][t] ?? '';
+    });
+  }
+
+  // Closing
+  ['fba','easyship','selfship'].forEach(ch => {
+    FEES.closing[ch].forEach((v, i) => {
+      const el = d.getElementById(`close_${ch}_b${i+1}`);
+      if (el) el.value = v;
+    });
+  });
+
+  // Easy Ship
+  ['local','regional','national','special'].forEach(z => {
+    d.getElementById(`esw_first500_${z}`).value = FEES.esWeight.first500[z];
+    d.getElementById(`esw_add500_${z}`).value   = FEES.esWeight.add500[z];
+  });
+
+  // FBA weight (slab model)
+  ['local','regional','national'].forEach(z => {
+    d.getElementById(`fbaw_s1_${z}`).value   = FEES.fbaWeight.slabs[0][z];
+    d.getElementById(`fbaw_s2_${z}`).value   = FEES.fbaWeight.slabs[1][z];
+    d.getElementById(`fbaw_s3_${z}`).value   = FEES.fbaWeight.slabs[2][z];
+    d.getElementById(`fbaw_pkg2_${z}`).value = FEES.fbaWeight.perKg2_5[z];
+    d.getElementById(`fbaw_pkg5_${z}`).value = FEES.fbaWeight.perKg5plus[z];
+  });
+
+  d.getElementById('fba_pickpack_std').value   = FEES.fbaPickPack.standard;
+  d.getElementById('fba_pickpack_heavy').value = FEES.fbaPickPack.heavy;
+  d.getElementById('fba_storage_offpeak').value= FEES.fbaStorage.offpeak;
+  d.getElementById('fba_storage_peak').value   = FEES.fbaStorage.peak;
+}
+
+// ── Freshness UI ──
+function updateFreshnessUI() {
+  const lastDate = FEES.lastUpdated ? new Date(FEES.lastUpdated) : null;
+  const today    = new Date();
+  const ageDays  = lastDate ? Math.floor((today - lastDate) / 86400000) : 999;
+
+  const dot    = document.getElementById('fee-freshness-dot');
+  const label  = document.getElementById('fee-updated-label');
+  const banner = document.getElementById('staleness-banner');
+  const days   = document.getElementById('staleness-days');
+  const note   = document.getElementById('data-note-updated');
+
+  const dateStr = lastDate ? lastDate.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : 'Unknown';
+  label.textContent = lastDate ? `(${dateStr})` : '(not set)';
+
+  if (note) {
+    note.innerHTML = ageDays <= 7
+      ? `<span class="verified">✓ Fees last verified: ${dateStr}</span>`
+      : ageDays <= 30
+        ? `<span style="color:var(--yellow); font-weight:600;">⚠ Fees last verified: ${dateStr} (${ageDays} days ago)</span>`
+        : `<span style="color:var(--red); font-weight:600;">⚠ Fees last verified: ${dateStr} — may be outdated</span>`;
+  }
+
+  if (ageDays > 60) {
+    dot.className = 'dot old';
+    banner.className = 'danger';
+    days.textContent = ageDays;
+    banner.style.display = 'block';
+  } else if (ageDays > 30) {
+    dot.className = 'dot stale';
+    banner.className = 'warn';
+    days.textContent = ageDays;
+    banner.style.display = 'block';
+  } else {
+    dot.className = 'dot';
+    banner.style.display = 'none';
+  }
+}
+
+// ── Modal open/close/tabs ──
+function openFeeModal() {
+  populateModalInputs();
+  document.getElementById('fee-modal').classList.add('open');
+}
+function closeFeeModal() {
+  document.getElementById('fee-modal').classList.remove('open');
+}
+document.getElementById('fee-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeFeeModal();
+});
+
+let activeTab = 'referral';
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.modal-tab').forEach((btn, i) => {
+    const tabs = ['referral','closing','easyship','fba'];
+    btn.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.modal-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════════
+
+let fulfil = 'easyship';
+let view = 'single';
+
+function setFulfil(m) {
+  fulfil = m;
+  ['selfship','easyship','fba'].forEach(x => document.getElementById('btn-'+x).classList.remove('active'));
+  document.getElementById('btn-'+m).classList.add('active');
+  updateUI();
+  calculate();
+}
+
+function setView(v) {
+  view = v;
+  document.getElementById('view-single').classList.toggle('active', v==='single');
+  document.getElementById('view-compare').classList.toggle('active', v==='compare');
+  document.getElementById('single-view').style.display  = v==='single'  ? 'block' : 'none';
+  document.getElementById('compare-view').style.display = v==='compare' ? 'block' : 'none';
+  if (v === 'compare') renderCompare();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  ZONE SYNC
+// ══════════════════════════════════════════════════════════════════
+
+const zones = ['local','regional','national','special'];
+
+function syncZones() {
+  const vals = zones.map(z => parseInt(document.getElementById('z-'+z).value));
+  const total = vals.reduce((a,b) => a+b, 0);
+  const tot = document.getElementById('zone-total');
+  tot.textContent = 'Total: ' + total + '%';
+  tot.className = 'zone-total ' + (total === 100 ? 'ok' : 'error');
+  zones.forEach((z,i) => { document.getElementById('zv-'+z).textContent = vals[i] + '%'; });
+  calculate();
+}
+
+function getZones() {
+  return {
+    local:    parseInt(document.getElementById('z-local').value)    / 100,
+    regional: parseInt(document.getElementById('z-regional').value) / 100,
+    national: parseInt(document.getElementById('z-national').value) / 100,
+    special:  parseInt(document.getElementById('z-special').value)  / 100
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  FEE LOOKUP HELPERS  (all read from FEES, not hardcoded)
+// ══════════════════════════════════════════════════════════════════
+
+function getReferralRate(cat, price) {
+  const r = FEES.referral[cat];
+  const hasTier3 = r.t3 !== undefined;
+  if (hasTier3) {
+    if (price <= 1000)  return r.t1;
+    if (price <= 15000) return r.t2;
+    return r.t3;
+  } else {
+    return price <= 1000 ? r.t1 : r.t2;
+  }
+}
+
+function getClosingFee(channel, price) {
+  const bands = FEES.closing[channel];
+  const thresholds = { fba: [300,500,1000], easyship: [300,500,1000], selfship: [300,500,1000] };
+  const t = thresholds[channel];
+  for (let i = 0; i < t.length; i++) { if (price <= t[i]) return bands[i]; }
+  return bands[bands.length - 1];
+}
+
+function getChargeable(weightG, L, W, H) {
+  const vol = (L * W * H) / 5;
+  return Math.max(weightG, vol);
+}
+
+function calcWeightFee(table, chargeableG) {
+  // Linear slab model — used for Easy Ship (esWeight table)
+  const over = Math.max(0, chargeableG - 500);
+  const addSlabs = Math.ceil(over / 500);
+  return (z) => table.first500[z] + addSlabs * table.add500[z];
+}
+
+function calcFBAWeightFee(chargeableG) {
+  // Stepped slab model for FBA weight handling (Standard STEP, Apr 2026)
+  const wt = FEES.fbaWeight;
+  for (const slab of wt.slabs) {
+    if (chargeableG <= slab.maxG) return (z) => slab[z];
+  }
+  // Above 2kg: apply per-kg incremental rates
+  const base2kg = wt.slabs[wt.slabs.length - 1];
+  if (chargeableG <= 5000) {
+    const kgOver2 = (chargeableG - 2000) / 1000;
+    return (z) => base2kg[z] + kgOver2 * wt.perKg2_5[z];
+  }
+  const kgOver5 = (chargeableG - 5000) / 1000;
+  return (z) => base2kg[z] + 3 * wt.perKg2_5[z] + kgOver5 * wt.perKg5plus[z];
+}
+
+function blendedWeightFee(table, chargeableG, zm) {
+  const feeFor = calcWeightFee(table, chargeableG);
+  const hasSpecial = table.first500.special !== undefined;
+  return feeFor('local')    * zm.local
+       + feeFor('regional') * zm.regional
+       + feeFor('national') * zm.national
+       + (hasSpecial ? feeFor('special') : feeFor('national')) * zm.special;
+}
+
+function blendedFBAWeightFee(chargeableG, zm) {
+  const feeFor = calcFBAWeightFee(chargeableG);
+  return feeFor('local')    * zm.local
+       + feeFor('regional') * zm.regional
+       + feeFor('national') * zm.national
+       + feeFor('national') * zm.special; // special zones: use national rate
+}
+
+function fbaStoragePerUnit(L, W, H, season) {
+  const cbft = (L * W * H) / 28316.8;
+  const rate = season === 'peak' ? FEES.fbaStorage.peak : FEES.fbaStorage.offpeak;
+  return cbft * rate;
+}
+
+function fmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits:0, maximumFractionDigits:0 });
+}
+
+function pct(n, base) {
+  if (!base) return '—';
+  return (n / base * 100).toFixed(1) + '%';
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  UPDATE UI
+// ══════════════════════════════════════════════════════════════════
+
+function updateUI() {
+  const isFBA = fulfil==='fba', isES=fulfil==='easyship', isSS=fulfil==='selfship';
+  document.getElementById('zone-section').classList.toggle('visible', isFBA||isES);
+  document.getElementById('dims-field').classList.toggle('visible', isFBA||isES);
+  document.getElementById('vol-weight-note').classList.toggle('visible', isFBA||isES);
+  document.getElementById('fba-section').classList.toggle('visible', isFBA);
+
+  const fl = document.getElementById('freight-label');
+  const fh = document.getElementById('freight-hint');
+  const fi = document.getElementById('freight');
+  if (isSS) {
+    fl.textContent = 'Your Freight Cost / Unit';
+    fh.textContent = 'Your own logistics cost per delivery (courier, packaging, ops)';
+    fi.disabled = false;
+  } else if (isFBA) {
+    fl.textContent = 'Own Freight / Unit';
+    fh.textContent = 'Not applicable for FBA — set Inbound Logistics % in FBA Storage section below';
+    fi.value = 0; fi.disabled = true;
+  } else {
+    fl.textContent = 'Extra Handling Cost / Unit';
+    fh.textContent = 'Any additional handling on your end';
+    fi.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  CORE CALCULATION
+// ══════════════════════════════════════════════════════════════════
+
+function calcUnit(fm) {
+  const mrp       = parseFloat(document.getElementById('mrp').value)      || 0;
+  const discountPct = parseFloat(document.getElementById('discount').value) || 0;
+  const price     = parseFloat(document.getElementById('price').value)    || 0;
+  const cogs     = parseFloat(document.getElementById('cogs').value)     || 0;
+  const weightG  = parseFloat(document.getElementById('weight').value)   || 0;
+  const L        = parseFloat(document.getElementById('dim-l').value)    || 0;
+  const W        = parseFloat(document.getElementById('dim-w').value)    || 0;
+  const H        = parseFloat(document.getElementById('dim-h').value)    || 0;
+  const packaging     = parseFloat(document.getElementById('packaging').value)|| 0;
+  const freight       = fm!=='fba' ? (parseFloat(document.getElementById('freight').value)||0) : 0;
+  const inboundPct    = (parseFloat(document.getElementById('inbound').value) || 0) / 100;
+  const saleableRt    = (parseFloat(document.getElementById('return-rate-saleable').value)||0) / 100;
+  const damagedRt     = (parseFloat(document.getElementById('return-rate-damaged').value)||0) / 100;
+  const returnRt      = saleableRt + damagedRt;   // total return rate for priceFactor
+  const returnCt      = parseFloat(document.getElementById('return-cost').value) || 0;
+  const liquidationPct= (parseFloat(document.getElementById('liquidation').value)||0) / 100;
+  const damagePct     = (parseFloat(document.getElementById('damage-prov').value)||0) / 100;
+  const acos          = (parseFloat(document.getElementById('acos').value)||0) / 100;
+  const agencyComm    = (parseFloat(document.getElementById('agency-comm').value)||0) / 100;
+  const waiver   = (parseFloat(document.getElementById('waiver').value)||0) / 100;
+  const category = document.getElementById('category').value;
+  const season   = document.getElementById('storage-season').value;
+  const zm       = getZones();
+
+  const baseChargeableG = fm==='selfship' ? weightG : getChargeable(weightG, L, W, H);
+  // Amazon FBA adds ~100g for packaging material when computing billing weight
+  const chargeableG = fm==='fba' ? baseChargeableG + 100 : baseChargeableG;
+
+  const rawReferralPct = getReferralRate(category, price) / 100;
+  const effectivePct   = Math.max(0, rawReferralPct - waiver);
+  const referralFee    = price * rawReferralPct;
+  const waiverAmt      = price * Math.min(waiver, rawReferralPct);
+
+  const closingFee = getClosingFee(fm, price);
+
+  let weightFee = 0;
+  if (fm==='easyship') weightFee = blendedWeightFee(FEES.esWeight,  chargeableG, zm);
+  if (fm==='fba')      weightFee = blendedFBAWeightFee(chargeableG, zm);
+
+  const pickPack   = fm==='fba' ? (weightG>=12000 ? FEES.fbaPickPack.heavy : FEES.fbaPickPack.standard) : 0;
+  const storageFee = fm==='fba' ? fbaStoragePerUnit(L, W, H, season) : 0;
+  const inboundFee = fm==='fba' ? price * inboundPct : 0;
+
+  const totalAmazonFees  = referralFee - waiverAmt + closingFee + weightFee + pickPack + storageFee;
+  const netRevenue       = price - totalAmazonFees;
+  // Saleable returns: refund price + handling, but recover COGS (item resold)
+  // Damaged returns:  refund price + handling, COGS written off (no recovery)
+  // Cost-burn model: what did this return actually cost in real money spent?
+  // Saleable: Amazon fees (not reversed) + handling cost. COGS recovered (item resold).
+  // Damaged:  COGS written off + Amazon fees (not reversed) + handling cost.
+  const returnProvision  = saleableRt * (totalAmazonFees + returnCt)
+                         + damagedRt  * (cogs + totalAmazonFees + returnCt);
+  const liquidationAmt   = price * liquidationPct;
+  const damageAmt        = cogs * damagePct;
+  const adSpend          = price * acos;
+  const agencyAmt        = price * agencyComm;
+  const totalSellerCosts = cogs + packaging + freight + inboundFee + returnProvision + liquidationAmt + damageAmt;
+  const grossMarginAmt   = netRevenue - totalSellerCosts;
+  const contribMarginAmt = grossMarginAmt - adSpend - agencyAmt;
+
+  const priceFactor = 1 - effectivePct - liquidationPct - acos - agencyComm;
+  const fixedCosts  = closingFee + weightFee + pickPack + storageFee + cogs + packaging + freight + inboundFee + returnProvision + damageAmt;
+  const breakevenPrice = priceFactor > 0 ? fixedCosts / priceFactor : null;
+
+  return { price, mrp, discountPct, cogs, weightG, chargeableG, L, W, H,
+    rawReferralPct, waiver, waiverAmt, referralFee, closingFee, weightFee, pickPack, storageFee,
+    totalAmazonFees, netRevenue, packaging, freight, inboundFee, returnProvision,
+    saleableRt, damagedRt, liquidationAmt, damageAmt, adSpend, agencyAmt,
+    totalSellerCosts, grossMarginAmt, contribMarginAmt, breakevenPrice, fm };
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════════════════
+
+function renderWaterfall(r) {
+  const rows = [];
+  rows.push({ label:`MRP ${r.discountPct>0?'('+r.discountPct.toFixed(0)+'% disc → SP)':''}`, amount: fmt(r.mrp) + (r.discountPct>0?' → '+fmt(r.price):''), cls:'neutral base' });
+  rows.push({ sep: true, label:'Amazon Fees' });
+  rows.push({ label:`Referral Fee (${(r.rawReferralPct*100).toFixed(1)}%)`, sub:'ex-GST', amount:'−'+fmt(r.referralFee), cls:'deduct', tag:'ver' });
+  if (r.waiverAmt > 0) rows.push({ label:`Accelerator Waiver (−${(r.waiver*100).toFixed(1)}%)`, sub:'off referral fee', amount:'+'+fmt(r.waiverAmt), cls:'credit' });
+  rows.push({ label:'Closing Fee', sub:'fixed per order', amount:'−'+fmt(r.closingFee), cls:'deduct', tag:'ver' });
+  if (r.fm !== 'selfship') rows.push({ label: r.fm==='fba'?'FBA Weight Handling':'Easy Ship Weight Handling', sub:`Blended (${Math.round(r.chargeableG)}g chargeable)`, amount:'−'+fmt(r.weightFee), cls:'deduct', tag:'est' });
+  if (r.fm === 'fba') {
+    rows.push({ label:'Pick & Pack Fee', sub: r.weightG>=12000?'Heavy & Bulky':'Standard size', amount:'−'+fmt(r.pickPack), cls:'deduct', tag:'est' });
+    rows.push({ label:'FBA Storage (per unit/mo)', sub:'Volume × season rate', amount:'−'+fmt(r.storageFee), cls:'deduct', tag:'est' });
+  }
+  rows.push({ subtotal:true, label:'Total Amazon Fees', val: fmt(r.totalAmazonFees) });
+  rows.push({ label:'Net Revenue', amount: fmt(r.netRevenue), cls: r.netRevenue<0?'deduct':'neutral', bold:true });
+  rows.push({ sep:true, label:'Your Costs' });
+  rows.push({ label:'COGS', amount:'−'+fmt(r.cogs), cls:'deduct' });
+  if (r.packaging>0) rows.push({ label:'Extra Packaging', amount:'−'+fmt(r.packaging), cls:'deduct' });
+  if (r.fm==='selfship'&&r.freight>0) rows.push({ label:'Your Freight / Logistics', amount:'−'+fmt(r.freight), cls:'deduct' });
+  if (r.fm==='fba'&&r.inboundFee>0)   rows.push({ label:'FBA Inbound Logistics', sub:`${(r.inboundFee/r.price*100).toFixed(1)}% of price`, amount:'−'+fmt(r.inboundFee), cls:'deduct' });
+  rows.push({ label:'Returns Provision', sub:`${(r.returnProvision/r.price*100).toFixed(1)}% eff. | ${(r.saleableRt*100).toFixed(0)}% saleable + ${(r.damagedRt*100).toFixed(0)}% damaged`, amount:'−'+fmt(r.returnProvision), cls:'deduct' });
+  rows.push({ label:'Liquidation Provision', sub:`${(r.liquidationAmt/r.price*100).toFixed(1)}% of price`, amount:'−'+fmt(r.liquidationAmt), cls:'deduct' });
+  rows.push({ label:'Damage / Loss Provision', sub:`${(r.cogs>0?(r.damageAmt/r.cogs*100):0).toFixed(1)}% of COGS`, amount:'−'+fmt(r.damageAmt), cls:'deduct' });
+  rows.push({ subtotal:true, label:'Total Your Costs (ex-ads)', val: fmt(r.totalSellerCosts) });
+  rows.push({ label:'Gross Margin', amount: fmt(r.grossMarginAmt), cls: r.grossMarginAmt<0?'deduct':'neutral', bold:true });
+  rows.push({ sep:true, label:'Growth & Operations Spend' });
+  rows.push({ label:`Ad Spend (ACoS ${(r.adSpend/r.price*100).toFixed(0)}%)`, amount:'−'+fmt(r.adSpend), cls:'deduct' });
+  rows.push({ label:`Agency Commission (${(r.agencyAmt/r.price*100).toFixed(0)}%)`, amount:'−'+fmt(r.agencyAmt), cls:'deduct' });
+  rows.push({ label:'Contribution Margin', amount: fmt(r.contribMarginAmt), cls: r.contribMarginAmt<0?'deduct':'neutral', bold:true });
+
+  let html = '';
+  for (const row of rows) {
+    if (row.sep) {
+      html += `<div class="waterfall-row" style="padding:10px 0 2px;"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)">${row.label}</span></div>`;
+    } else if (row.subtotal) {
+      html += `<div class="waterfall-subtotal"><span class="stlabel">${row.label}</span><span class="stval">${row.val}</span></div><div class="waterfall-divider"></div>`;
+    } else {
+      const tg = row.tag==='est'?'<span class="tag est">est</span>':row.tag==='ver'?'<span class="tag ver">✓</span>':'';
+      html += `<div class="waterfall-row"><span class="label"${row.bold?' style="font-weight:700"':''}>${row.label}${tg}${row.sub?`<small>${row.sub}</small>`:''}</span><span class="amount ${row.cls}">${row.amount}</span></div>`;
+    }
+  }
+  document.getElementById('waterfall').innerHTML = html;
+}
+
+function renderMarginBoxes(r) {
+  const gPct = r.price>0 ? r.grossMarginAmt/r.price*100 : 0;
+  const cPct = r.price>0 ? r.contribMarginAmt/r.price*100 : 0;
+  const cls = p => p>=20?'positive':p>=8?'warning':p>=0?'warning':'negative';
+
+  document.getElementById('gross-box').className  = 'margin-box '+cls(gPct);
+  document.getElementById('gross-pct').textContent = gPct.toFixed(1)+'%';
+  document.getElementById('gross-abs').textContent = (r.grossMarginAmt>=0?'+':'')+fmt(r.grossMarginAmt)+' / unit';
+
+  document.getElementById('contrib-box').className  = 'margin-box '+cls(cPct);
+  document.getElementById('contrib-pct').textContent = cPct.toFixed(1)+'%';
+  document.getElementById('contrib-abs').textContent = (r.contribMarginAmt>=0?'+':'')+fmt(r.contribMarginAmt)+' / unit';
+
+  document.getElementById('be-price').textContent = r.breakevenPrice&&r.breakevenPrice>0
+    ? '₹'+Math.ceil(r.breakevenPrice).toLocaleString('en-IN') : 'N/A';
+}
+
+function renderFeeSummary(r) {
+  const feeAsPct = r.price>0 ? (r.totalAmazonFees/r.price*100) : 0;
+  document.getElementById('fee-summary').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div style="text-align:center;padding:10px;background:#F7F5F1;border-radius:8px;">
+        <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Referral Fee</div>
+        <div style="font-size:16px;font-weight:800">${(r.rawReferralPct*100).toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--muted)">${fmt(r.referralFee)}</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:#F7F5F1;border-radius:8px;">
+        <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Amazon Fees Total</div>
+        <div style="font-size:16px;font-weight:800">${feeAsPct.toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--muted)">${fmt(r.totalAmazonFees)}</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:${r.waiverAmt>0?'var(--green-bg)':'#F7F5F1'};border-radius:8px;">
+        <div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Waiver Saving</div>
+        <div style="font-size:16px;font-weight:800;color:${r.waiverAmt>0?'var(--green)':'inherit'}">+${fmt(r.waiverAmt)}</div>
+        <div style="font-size:11px;color:var(--muted)">${(r.waiver*100).toFixed(1)}% off referral</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);padding-top:8px;border-top:1px solid var(--border)">
+      💡 Amazon charges 18% GST on above fees — you recover as ITC.
+      Method: <strong>${r.fm==='fba'?'FBA':r.fm==='easyship'?'Easy Ship':'Self-Ship'}</strong> |
+      Chargeable wt: <strong>${r.chargeableG>r.weightG?'Volumetric':'Actual'} (${Math.round(r.chargeableG)}g)</strong>
+    </div>`;
+}
+
+function renderCompare() {
+  const methods = ['selfship','easyship','fba'];
+  const labels  = { selfship:'Self-Ship', easyship:'Easy Ship', fba:'FBA' };
+  const res = {};
+  methods.forEach(m => { res[m] = calcUnit(m); });
+  const bestM = methods.reduce((a,b) => res[a].contribMarginAmt >= res[b].contribMarginAmt ? a : b);
+
+  let html = `<table class="compare-table"><thead><tr><th>Fee / Cost Item</th>${
+    methods.map(m=>`<th class="${m===bestM?'win-col':''}">${labels[m]}${m===bestM?' 🏆':''}</th>`).join('')
+  }</tr></thead><tbody>`;
+
+  const lines = [
+    { key:'price',           label:'Selling Price',           sign:1 },
+    { key:'referralFee',     label:'Referral Fee',            sign:-1 },
+    { key:'waiverAmt',       label:'Waiver Saving',           sign:1 },
+    { key:'closingFee',      label:'Closing Fee',             sign:-1 },
+    { key:'weightFee',       label:'Weight Handling',         sign:-1 },
+    { key:'pickPack',        label:'Pick & Pack (FBA)',        sign:-1 },
+    { key:'storageFee',      label:'Storage (FBA)',            sign:-1 },
+    { key:'netRevenue',      label:'Net Revenue',             sign:1,  divider:true },
+    { key:'cogs',            label:'COGS',                    sign:-1 },
+    { key:'freight',         label:'Own Freight (Self-Ship)', sign:-1 },
+    { key:'inboundFee',      label:'Inbound Logistics (FBA)', sign:-1 },
+    { key:'returnProvision', label:'Returns Provision',       sign:-1 },
+    { key:'liquidationAmt',  label:'Liquidation Provision',   sign:-1 },
+    { key:'damageAmt',       label:'Damage / Loss Provision', sign:-1 },
+    { key:'adSpend',         label:'Ad Spend (ACoS)',         sign:-1 },
+    { key:'agencyAmt',       label:'Agency Commission',       sign:-1 },
+    { key:'contribMarginAmt',label:'Contribution Margin',     sign:1,  divider:true, bold:true }
+  ];
+
+  for (const li of lines) {
+    if (li.divider) html += `<tr><td colspan="4" style="height:6px;background:#F7F5F1;padding:0"></td></tr>`;
+    html += `<tr><td ${li.bold?'style="font-weight:700"':''}>${li.label}</td>${
+      methods.map(m => {
+        const v = res[m][li.key];
+        const isWin = m===bestM;
+        if (li.bold) return `<td class="${isWin?'win-col':''}" style="font-weight:700"><span class="${v>=0?'highlight':'neg'}">${fmt(v)}<br/><small style="font-weight:400">${pct(v,res[m].price)}</small></span></td>`;
+        if (li.sign>0) return `<td class="${isWin?'win-col':''}">${li.key==='price'?fmt(v):`<span class="${v>0?'highlight':v<0?'neg':''}">${fmt(v)}</span>`}</td>`;
+        return `<td class="${isWin?'win-col':''}"><span class="neg">${v>0?'−'+fmt(v):fmt(v)}</span></td>`;
+      }).join('')
+    }</tr>`;
+  }
+
+  html += `</tbody></table><div style="font-size:11px;color:var(--muted);margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
+    <span class="tag est">est</span> Weight handling, FBA pick &amp; pack, storage are estimates — verify in Seller Central.</div>`;
+  document.getElementById('compare-table-container').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  MAIN CALCULATE
+// ══════════════════════════════════════════════════════════════════
+
+function calculate() {
+  const r = calcUnit(fulfil);
+
+  if (fulfil !== 'selfship') {
+    const L=parseFloat(document.getElementById('dim-l').value)||0;
+    const W=parseFloat(document.getElementById('dim-w').value)||0;
+    const H=parseFloat(document.getElementById('dim-h').value)||0;
+    const volG=(L*W*H)/5;
+    const actual=parseFloat(document.getElementById('weight').value)||0;
+    document.getElementById('vol-weight-note').textContent =
+      `Volumetric: ${Math.round(volG)}g | Actual: ${actual}g | Chargeable: ${Math.round(r.chargeableG)}g (${r.chargeableG>actual?'volumetric applies':'actual weight applies'})`;
+  }
+
+  if (view==='single') { renderWaterfall(r); renderMarginBoxes(r); renderFeeSummary(r); }
+  else renderCompare();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  EVENT LISTENERS
+// ══════════════════════════════════════════════════════════════════
+
+['mrp','discount','cogs','weight','dim-l','dim-w','dim-h','packaging','freight',
+ 'return-rate-saleable','return-rate-damaged','return-cost','liquidation','damage-prov','acos','agency-comm','waiver','fba-units','inbound'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', calculate);
+});
+document.getElementById('category').addEventListener('change', calculate);
+document.getElementById('storage-season').addEventListener('change', calculate);
+
+// ══════════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════════
+
+updateUI();
+updateFreshnessUI();
+updateDBCount();
+computeSellingPrice();
+</script>
+</body>
+</html>
