@@ -1018,8 +1018,10 @@ function showSuggestions() {
 
 function selectProduct(jsonOrObj) {
   const p = typeof jsonOrObj === 'string' ? JSON.parse(jsonOrObj) : jsonOrObj;
-  const cat = p.category || guessCategoryFromSKU(p.sku, p.price);
-  document.getElementById('mrp').value      = p.mrp || p.price;
+  const rawCat = p.category || '';
+  const resolvedPrice = p.mrp || p.price || 0;
+  const cat = mapCategoryToFeeCat(rawCat, p.sku, resolvedPrice);
+  document.getElementById('mrp').value      = resolvedPrice;
   delete document.getElementById('cogs').dataset.manual;  // reset to auto 25%
   document.getElementById('category').value = cat;
   if (p.weight) document.getElementById('weight').value = p.weight;
@@ -1081,8 +1083,9 @@ function doAutofill() {
     return;
   }
 
-  const cat = found.category || guessCategoryFromSKU(found.sku, found.price);
-  document.getElementById('mrp').value      = found.mrp || found.price;
+  const foundPrice = found.mrp || found.price || 0;
+  const cat = mapCategoryToFeeCat(found.category || '', found.sku, foundPrice);
+  document.getElementById('mrp').value      = foundPrice;
   delete document.getElementById('cogs').dataset.manual;  // reset to auto 25%
   document.getElementById('category').value = cat;
   if (found.weight) document.getElementById('weight').value = found.weight;
@@ -1098,7 +1101,7 @@ function doAutofill() {
 
 // ── CSV Import ──
 const CSV_HEADERS = ['product_name','sku','category','mrp','cogs','packaging_cost','gst_rate','weight_grams','length_cm','width_cm','height_cm','notes'];
-const CATEGORY_VALUES = ['large-furniture','furniture-other','home-decor','glassware-ceramicware','cookware-tableware','kitchen-tools'];
+const CATEGORY_VALUES = ['large-furniture','furniture-other','home-decor','home-textiles','lighting','glassware-ceramicware','cookware-tableware','kitchen-tools'];
 
 function importCSV(event) {
   const file = event.target.files[0];
@@ -1154,7 +1157,7 @@ function importCSV(event) {
 function downloadTemplate() {
   const rows = [
     CSV_HEADERS.join(','),
-    '# Category must be one of: ' + CATEGORY_VALUES.join(' | '),
+    '# Category: use fee category names OR Ellementry names (DISHWARE_PLATE, DRINKING_CUP etc.) — auto-mapped',
     'Eclipse Ceramic Coffee Mug Set of 2,SWETA2197,glassware-ceramicware,1090,320,30,12,800,14,11,11,Live product',
     'My New Pre-Launch Vase,NEW-SKU-001,home-decor,1500,400,40,12,600,18,12,15,Launching Q3 2026',
   ];
